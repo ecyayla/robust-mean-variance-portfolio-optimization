@@ -190,17 +190,17 @@ def run_experiments_rmvp1():
             print(f"    Running gamma={gamma:.6f} (Dropped: {num_removed})")
 
             tau_minus_gamma_bnb = "ALL_DROPPED"
-            tau_minus_gamma_mip_cvx = "ALL_DROPPED"
+            # tau_minus_gamma_mip_cvx = "ALL_DROPPED"
             tau_minus_gamma_mip_gurobi = "ALL_DROPPED"
             bnb_time = bnb_time_cpu = 0
-            mip_time_cvx = mip_time_cvx_cpu = 0
+            # mip_time_cvx = mip_time_cvx_cpu = 0
             mip_time_gurobi = mip_time_gurobi_cpu = 0
 
             # Check if all assets are dropped
             if num_removed == n or num_removed == n-1:
                 print(f"    Skipping solver: All {n} assets dropped.")
                 obj_bnb = "ALL_DROPPED"
-                obj_mip_cvx = "ALL_DROPPED"
+                # obj_mip_cvx = "ALL_DROPPED"
                 obj_mip_gurobi = "ALL_DROPPED"
             else:
                 # --- BnB Solver ---
@@ -217,16 +217,17 @@ def run_experiments_rmvp1():
                 print("bnb completed")
 
                 # --- MIP CVXPY Solver ---
-                start_time = time.time()
-                start_cpu = time.process_time()
-                x_mip, _ = RMVP1_mipCVXPY(D, tau, tau_bar, gamma, beta_scaled)
-                mip_time_cvx = time.time() - start_time
-                mip_time_cvx_cpu = time.process_time() - start_cpu
-                obj_mip_cvx = (x_mip.T @ D @ x_mip + beta_scaled * np.sum(np.abs(x_mip) > 1e-8))[0][0]
-                tauTx_mip = (tau.T @ x_mip)[0]
-                normD_mip = np.sqrt(x_mip.T @ D @ x_mip)[0]
-                tau_minus_gamma_mip_cvx = tauTx_mip - gamma * normD_mip
-                print("mip cvxpy completed")
+                # We won't use this solver for comparison
+                # start_time = time.time()
+                # start_cpu = time.process_time()
+                # x_mip, _ = RMVP1_mipCVXPY(D, tau, tau_bar, gamma, beta_scaled)
+                # mip_time_cvx = time.time() - start_time
+                # mip_time_cvx_cpu = time.process_time() - start_cpu
+                # obj_mip_cvx = (x_mip.T @ D @ x_mip + beta_scaled * np.sum(np.abs(x_mip) > 1e-8))[0][0]
+                # tauTx_mip = (tau.T @ x_mip)[0]
+                # normD_mip = np.sqrt(x_mip.T @ D @ x_mip)[0]
+                # tau_minus_gamma_mip_cvx = tauTx_mip - gamma * normD_mip
+                # print("mip cvxpy completed")
 
                 # --- MIP GUROBI Solver ---
                 start_time = time.time()
@@ -255,14 +256,14 @@ def run_experiments_rmvp1():
                 "obj_BnB": obj_bnb,
                 "time_BnB": bnb_time,
                 "time_cpu_BnB": bnb_time_cpu,
-                "obj_MIP_CVXPY": obj_mip_cvx,
-                "time_MIP_CVXPY": mip_time_cvx,
-                "time_cpu_MIP_CVXPY": mip_time_cvx_cpu,
+                # "obj_MIP_CVXPY": obj_mip_cvx,
+                # "time_MIP_CVXPY": mip_time_cvx,
+                # "time_cpu_MIP_CVXPY": mip_time_cvx_cpu,
                 "obj_MIP_GUROBI": obj_mip_gurobi,
                 "time_MIP_GUROBI": mip_time_gurobi,
                 "time_cpu_MIP_GUROBI": mip_time_gurobi_cpu,
                 "tauTx_minus_gammaNormD_BnB": tau_minus_gamma_bnb if num_removed != n else "ALL_DROPPED",
-                "tauTx_minus_gammaNormD_MIP_CVXPY": tau_minus_gamma_mip_cvx if num_removed != n else "ALL_DROPPED",
+                # "tauTx_minus_gammaNormD_MIP_CVXPY": tau_minus_gamma_mip_cvx if num_removed != n else "ALL_DROPPED",
                 "tauTx_minus_gammaNormD_MIP_GUROBI": tau_minus_gamma_mip_gurobi if num_removed != n else "ALL_DROPPED"
             }
             results.append(result_row)
