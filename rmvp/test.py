@@ -105,28 +105,68 @@ def generate_rmvp2_data(
     gamma = base_data['gamma']
     beta = base_data['beta']
     
-    # Estimate t (D-norm constraint bound)
-    # H = sqrt(tau^T D^-1 tau)
-    try:
-        D_inv = np.linalg.inv(D)
-        H = float(np.sqrt(tau.T @ D_inv @ tau))
-        
-        # Lower bound on t for non-trivial solutions
-        D_diag_sqrt = np.sqrt(np.diag(D))
-        denominators = (tau / D_diag_sqrt) - gamma
-        denominators = np.maximum(denominators, 1e-8)
-        min_t_bound = np.min(beta / denominators)
-        
-        # Heuristic for t: larger than H and the bound
-        if t is None:
-             t = max(1.1 * H, 1.1 * min_t_bound)
-        
-    except Exception as e:
-        print(f"Error calculating t: {e}")
-        t = 1.0 # Fallback
+    # Estimate/enforce t (D-norm constraint bound)
+    # Assumption: t > min_i { beta / (|tau[i]|/sqrt(D_ii) - gamma) }
+    D_inv = np.linalg.inv(D)
+    H = float(np.sqrt(tau.T @ D_inv @ tau))
+
+    D_diag_sqrt = np.sqrt(np.diag(D))
+    denominators = (np.abs(tau) / np.maximum(D_diag_sqrt, 1e-12)) - gamma
+    # Guard against nonpositive denominators (assumption violation)
+    denominators = np.maximum(denominators, 1e-8)
+    min_t_bound = np.min(beta / denominators)
+
+    # If t is provided but too small, lift it; otherwise set using H and the bound
+    if t is None:
+        t = max(1.1 * H, 1.1 * min_t_bound)
+    elif t <= min_t_bound:
+        print(f"Provided t={t} violates lower bound {min_t_bound:.6e}; adjusting.")
+        t = 1.1 * min_t_bound
         
     base_data['t'] = t
     return base_data
+
+
+def preprocess_rmvp2(D, tau, gamma, beta, t, tol=1e-6):
+    """
+    Enforce assumptions for RMVP2 by filtering assets:
+      1) |tau_i| / sqrt(D_ii) > gamma  (robust feasibility)
+      2) Given t > 0: |tau_i| / sqrt(D_ii) > gamma + beta / t
+         If t is None or 0: set t to (1+tol) * min_i beta / (|tau_i|/sqrt(D_ii) - gamma)
+    Returns filtered (D, tau), adjusted t, and kept indices.
+    """
+    diag_sqrt = np.sqrt(np.diag(D))
+    ratio = np.abs(tau) / np.maximum(diag_sqrt, 1e-12)
+
+    # Filter by gamma assumption
+    keep_mask = ratio > (gamma + tol)
+    if not np.any(keep_mask):
+        return None, None, None, []
+    idx_keep = np.where(keep_mask)[0]
+    D_f = D[np.ix_(idx_keep, idx_keep)]
+    tau_f = tau[idx_keep]
+    diag_sqrt = np.sqrt(np.diag(D_f))
+    ratio = np.abs(tau_f) / np.maximum(diag_sqrt, 1e-12)
+
+    # Determine or adjust t
+    if t is None or t == 0:
+        denom = ratio - gamma
+        denom = np.maximum(denom, 1e-8)
+        min_t_bound = np.min(beta / denom)
+        t_adj = (1.0 + tol) * min_t_bound
+    else:
+        t_adj = t
+
+    # If t_adj is provided, filter assets that violate t lower bound
+    threshold = gamma + beta / t_adj
+    keep_mask_t = ratio > (threshold + tol)
+    if not np.any(keep_mask_t):
+        return None, None, None, []
+    idx_keep = idx_keep[keep_mask_t]
+    D_f = D[np.ix_(idx_keep, idx_keep)]
+    tau_f = tau[idx_keep]
+
+    return D_f, tau_f, t_adj, idx_keep
 
 
 def run_experiments_rmvp1():
@@ -192,6 +232,8 @@ def run_experiments_rmvp1():
             tau_minus_gamma_bnb = "ALL_DROPPED"
             # tau_minus_gamma_mip_cvx = "ALL_DROPPED"
             tau_minus_gamma_mip_gurobi = "ALL_DROPPED"
+            nnz_bnb = "ALL_DROPPED"
+            nnz_mip_gurobi = "ALL_DROPPED"
             bnb_time = bnb_time_cpu = 0
             # mip_time_cvx = mip_time_cvx_cpu = 0
             mip_time_gurobi = mip_time_gurobi_cpu = 0
@@ -214,6 +256,7 @@ def run_experiments_rmvp1():
                 tauTx_bnb = (tau.T @ x_bnb)[0]
                 normD_bnb = np.sqrt(x_bnb.T @ D @ x_bnb)[0]
                 tau_minus_gamma_bnb = tauTx_bnb - gamma * normD_bnb
+                nnz_bnb = int(np.sum(np.abs(x_bnb) > 1e-8))
                 print("bnb completed")
 
                 # --- MIP CVXPY Solver ---
@@ -232,13 +275,14 @@ def run_experiments_rmvp1():
                 # --- MIP GUROBI Solver ---
                 start_time = time.time()
                 start_cpu = time.process_time()
-                x_mip_gurobi, _ = RMVP1_mipGUROBI(D, tau, tau_bar, gamma, beta_scaled)
+                x_mip_gurobi, _, gap_mip_gurobi = RMVP1_mipGUROBI(D, tau, tau_bar, gamma, beta_scaled)
                 mip_time_gurobi = time.time() - start_time
                 mip_time_gurobi_cpu = time.process_time() - start_cpu
                 obj_mip_gurobi = (x_mip_gurobi.T @ D @ x_mip_gurobi + beta_scaled * np.sum(np.abs(x_mip_gurobi) > 1e-8))[0][0]
                 tauTx_mip_gurobi = (tau.T @ x_mip_gurobi)[0]
                 normD_mip_gurobi = np.sqrt(x_mip_gurobi.T @ D @ x_mip_gurobi)[0]
                 tau_minus_gamma_mip_gurobi = tauTx_mip_gurobi - gamma * normD_mip_gurobi
+                nnz_mip_gurobi = int(np.sum(np.abs(x_mip_gurobi) > 1e-8))
                 print("mip gurobi completed")
 
 
@@ -256,15 +300,19 @@ def run_experiments_rmvp1():
                 "obj_BnB": obj_bnb,
                 "time_BnB": bnb_time,
                 "time_cpu_BnB": bnb_time_cpu,
+                "nnz_BnB": nnz_bnb,
                 # "obj_MIP_CVXPY": obj_mip_cvx,
                 # "time_MIP_CVXPY": mip_time_cvx,
                 # "time_cpu_MIP_CVXPY": mip_time_cvx_cpu,
                 "obj_MIP_GUROBI": obj_mip_gurobi,
                 "time_MIP_GUROBI": mip_time_gurobi,
                 "time_cpu_MIP_GUROBI": mip_time_gurobi_cpu,
+                "nnz_MIP_GUROBI": nnz_mip_gurobi,
+                "gap_MIP_GUROBI": gap_mip_gurobi,
                 "tauTx_minus_gammaNormD_BnB": tau_minus_gamma_bnb if num_removed != n else "ALL_DROPPED",
                 # "tauTx_minus_gammaNormD_MIP_CVXPY": tau_minus_gamma_mip_cvx if num_removed != n else "ALL_DROPPED",
-                "tauTx_minus_gammaNormD_MIP_GUROBI": tau_minus_gamma_mip_gurobi if num_removed != n else "ALL_DROPPED"
+                "tauTx_minus_gammaNormD_MIP_GUROBI": tau_minus_gamma_mip_gurobi if num_removed != n else "ALL_DROPPED",
+                "gap_MIP_GUROBI": gap_mip_gurobi if num_removed != n else "ALL_DROPPED"
             }
             results.append(result_row)
             
@@ -290,9 +338,7 @@ def run_experiments_rmvp2():
     # Search in datasets/ (relative to script) or rmvp/datasets/ or ../datasets
     # Using relative paths assuming script execution from root or rmvp folder
     data_files = glob.glob("rmvp/datasets/*.xlsx") + glob.glob("datasets/*.xlsx")
-    
-    # Remove duplicates if any
-    data_files = list(set(data_files))
+    data_files = sorted(set(data_files))
     
     if not data_files:
         print("No datasets found.")
@@ -304,12 +350,12 @@ def run_experiments_rmvp2():
     print(f"Results will be saved to: {output_file}")
 
     # Parameter ranges for experimentation
-    rc_values = [0.0, 0.0001, 0.0005]
-    beta_values = [1e-5, 1e-4, 1e-3]
-    target_return_factors = [1.05, 1.1]
+    rc_values = [0.0002, 0.0004]
+    beta_values = [1e-4, 1e-5, 5e-6, 1e-6]
+    target_return_factors = [1.05, 1.1, 1.15]
     
     # 0.0 triggers the dynamic calculation in generate_rmvp1_data (called by generate_rmvp2_data)
-    gamma_inputs = [0.001, 0.01, 0.0]
+    gamma_inputs = [0.001, 0.01, 0.1, 0.0]
 
     # Generate combinations of parameters excluding gamma
     param_combinations = product(data_files, rc_values, beta_values, target_return_factors)
@@ -331,58 +377,73 @@ def run_experiments_rmvp2():
             if not problem_data:
                 continue
 
-            D = problem_data['D']
-            tau = problem_data['tau']
+            D_full = problem_data['D']
+            tau_full = problem_data['tau']
             tau_bar = problem_data['tau_bar']
             gamma = problem_data['gamma'] # The actual used gamma
             beta_scaled = problem_data['beta']
-            t = problem_data['t']
-            n = problem_data['n']
-            
-            # Count assets violating assumption
-            D_diag_sqrt = np.sqrt(np.diag(D))
-            feasibility_margin = np.abs(tau) - (gamma * D_diag_sqrt)
-            num_removed = np.sum(feasibility_margin <= 0)
-            
-            print(f"    Running gamma={gamma:.6f} | t={t:.4f} (Dropped: {num_removed})")
+            t_in = problem_data['t']
 
-            # Check if all assets are dropped
-            if num_removed == n or num_removed == n-1:
-                print(f"    Skipping solver: All {n} assets dropped.")
-                obj_bnb, bnb_time = "ALL_DROPPED", 0
-                obj_mip_cvx, mip_time_cvx = "ALL_DROPPED", 0
-                obj_mip_gurobi, mip_time_gurobi = "ALL_DROPPED", 0
+            # Enforce assumptions and filter assets
+            D, tau, t, idx_keep = preprocess_rmvp2(D_full, tau_full, gamma, beta_scaled, t_in, tol=1e-6)
+            n_full = len(tau_full)
+            n = len(tau) if tau is not None else 0
+            
+            if n == 0 or n == 1:
+                print("    Skipping solver: all assets dropped after assumption filtering.")
+                obj_bnb = obj_mip_cvx = obj_mip_gurobi = "ALL_DROPPED"
+                bnb_time = bnb_time_cpu = mip_time_cvx = mip_time_gurobi = mip_time_gurobi_cpu = 0
+                nnz_bnb = nnz_mip_gurobi = "ALL_DROPPED"
+                tau_minus_gamma_bnb = tau_minus_gamma_mip_gurobi = "ALL_DROPPED"
+                gap_mip_gurobi = "ALL_DROPPED"
+                num_removed = n_full
             else:
+                num_removed = n_full - n
+                print(f"    Running gamma={gamma:.6f} | t={t:.4f} (Dropped: {num_removed})")
                 # --- BnB Solver ---
                 start_time = time.time()
+                start_cpu = time.process_time()
                 x_bnb, _, supp_bnb, _ = mainRMVP2BnB(D, tau, tau_bar, gamma, beta_scaled, t)
                 bnb_time = time.time() - start_time
+                bnb_time_cpu = time.process_time() - start_cpu
                 x_bnb = zeropadding(x_bnb, supp_bnb, n)
                 # Recalculate objective: -tau^T x + tau_bar + gamma * ||x||_D + beta * ||x||_0
-                norm_D_bnb = np.sqrt(x_bnb.T @ D @ x_bnb)[0,0]
-                obj_bnb = -(tau.T @ x_bnb)[0,0] + tau_bar + gamma * norm_D_bnb + beta_scaled * np.sum(np.abs(x_bnb) > 1e-8)
+                quad_bnb = (x_bnb.T @ D @ x_bnb)[0][0]
+                norm_D_bnb = np.sqrt(quad_bnb)
+                tauTx_bnb = (tau.T @ x_bnb)[0]
+                obj_bnb = -tauTx_bnb + tau_bar + gamma * norm_D_bnb + beta_scaled * np.sum(np.abs(x_bnb) > 1e-8)
+                tau_minus_gamma_bnb = tauTx_bnb - gamma * norm_D_bnb
+                nnz_bnb = int(np.sum(np.abs(x_bnb) > 1e-8))
                 print("bnb completed")
 
-                # --- MIP CVXPY Solver ---
-                start_time = time.time()
-                x_mip_cvx, _ = RMVP2_mipCVXPY(D, tau, tau_bar, gamma, beta_scaled, t)
-                mip_time_cvx = time.time() - start_time
-                norm_D_cvx = np.sqrt(x_mip_cvx.T @ D @ x_mip_cvx)[0,0]
-                obj_mip_cvx = -(tau.T @ x_mip_cvx)[0,0] + tau_bar + gamma * norm_D_cvx + beta_scaled * np.sum(np.abs(x_mip_cvx) > 1e-8)
-                print("mip cvxpy completed")
+                # --- MIP CVXPY Solver (disabled) ---
+                # start_time = time.time()
+                # x_mip_cvx, _ = RMVP2_mipCVXPY(D, tau, tau_bar, gamma, beta_scaled, t)
+                # mip_time_cvx = time.time() - start_time
+                # norm_D_cvx = float(np.sqrt(x_mip_cvx.T @ D @ x_mip_cvx))
+                # tauTx_mip_cvx = float(tau.T @ x_mip_cvx)
+                # obj_mip_cvx = -tauTx_mip_cvx + tau_bar + gamma * norm_D_cvx + beta_scaled * np.sum(np.abs(x_mip_cvx) > 1e-8)
+                # print("mip cvxpy completed")
 
                 # --- MIP GUROBI Solver ---
                 start_time = time.time()
-                x_mip_gurobi, _ = RMVP2_mipGUROBI(D, tau, tau_bar, gamma, beta_scaled, t)
+                start_cpu = time.process_time()
+                x_mip_gurobi, _, gap_mip_gurobi = RMVP2_mipGUROBI(D, tau, tau_bar, gamma, beta_scaled, t)
                 mip_time_gurobi = time.time() - start_time
-                norm_D_gurobi = np.sqrt(x_mip_gurobi.T @ D @ x_mip_gurobi)[0,0]
-                obj_mip_gurobi = -(tau.T @ x_mip_gurobi)[0,0] + tau_bar + gamma * norm_D_gurobi + beta_scaled * np.sum(np.abs(x_mip_gurobi) > 1e-8)
+                mip_time_gurobi_cpu = time.process_time() - start_cpu
+                quad_gurobi = (x_mip_gurobi.T @ D @ x_mip_gurobi)[0][0]
+                norm_D_gurobi = np.sqrt(quad_gurobi)
+                tauTx_mip_gurobi = (tau.T @ x_mip_gurobi)[0]
+                obj_mip_gurobi = -tauTx_mip_gurobi + tau_bar + gamma * norm_D_gurobi + beta_scaled * np.sum(np.abs(x_mip_gurobi) > 1e-8)
+                tau_minus_gamma_mip_gurobi = tauTx_mip_gurobi - gamma * norm_D_gurobi
+                nnz_mip_gurobi = int(np.sum(np.abs(x_mip_gurobi) > 1e-8))
                 print("mip gurobi completed")
 
             # Store result
             result_row = {
                 "Dataset": file_path,
-                "n": n,
+                "n": n_full,
+                "n_filtered": n,
                 "gamma": gamma,
                 "r_c": r_c,
                 "beta": beta,
@@ -393,10 +454,17 @@ def run_experiments_rmvp2():
                 "tau_bar": tau_bar,
                 "obj_BnB": obj_bnb,
                 "time_BnB": bnb_time,
-                "obj_MIP_CVXPY": obj_mip_cvx,
-                "time_MIP_CVXPY": mip_time_cvx,
+                "time_cpu_BnB": bnb_time_cpu,
+                "nnz_BnB": nnz_bnb,
+                # "obj_MIP_CVXPY": obj_mip_cvx,
+                # "time_MIP_CVXPY": mip_time_cvx,
                 "obj_MIP_GUROBI": obj_mip_gurobi,
-                "time_MIP_GUROBI": mip_time_gurobi
+                "time_MIP_GUROBI": mip_time_gurobi,
+                "time_cpu_MIP_GUROBI": mip_time_gurobi_cpu,
+                "nnz_MIP_GUROBI": nnz_mip_gurobi,
+                "gap_MIP_GUROBI": gap_mip_gurobi,
+                "tauTx_minus_gammaNormD_BnB": tau_minus_gamma_bnb if num_removed != n_full else "ALL_DROPPED",
+                "tauTx_minus_gammaNormD_MIP_GUROBI": tau_minus_gamma_mip_gurobi if num_removed != n_full else "ALL_DROPPED"
             }
             results.append(result_row)
             
@@ -420,13 +488,13 @@ def run_experiments_rmvp2():
 
 if __name__ == "__main__":
 
-    run_experiments_rmvp1()
-    #run_experiments_rmvp2()
+    #run_experiments_rmvp1()
+    run_experiments_rmvp2()
 
 
 
     """
-    problem_data = generate_rmvp1_data(file_path="rmvp/datasets/DowJones_returns.xlsx", sheet_name=0, r_c=2e-4, gamma=0, beta=1e-4, target_return_factor=1.05, scale_returns=100)
+    problem_data = generate_rmvp1_data(file_path="rmvp/datasets/SP500_returns.xlsx", sheet_name=0, r_c=2e-4, gamma=0, beta=1e-4, target_return_factor=1.05, scale_returns=100)
     D = problem_data['D']
     tau = problem_data['tau']
     tau_bar = problem_data['tau_bar']
@@ -457,4 +525,7 @@ if __name__ == "__main__":
     print("const: ", tau.T @ x_bnb1 - gamma * np.sqrt(x_bnb1.T @ D @ x_bnb1))
 
     """
+
+
+    
     

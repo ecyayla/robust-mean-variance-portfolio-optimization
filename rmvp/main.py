@@ -379,6 +379,8 @@ def RMVP1_mipGUROBI(D, tau, tau_bar, gamma, beta):
     model.setParam('NumericFocus', 3)
     model.setParam('BarConvTol', 1e-9)
     model.setParam('BarQCPConvTol', 1e-9)
+    # Time limit (seconds) ~ 1 hour
+    model.setParam('TimeLimit', 3600)
 
     model.optimize()
     print("MIP GUROBI status: ", model.status)
@@ -386,9 +388,13 @@ def RMVP1_mipGUROBI(D, tau, tau_bar, gamma, beta):
     if model.status == GRB.OPTIMAL:
         x_opt = np.array([[x[i].x] for i in range(n)])
         z_opt = np.array([z[i].x for i in range(n)])
-        return x_opt, model.objVal
+        return x_opt, model.objVal, model.MIPGap
+    elif model.SolCount > 0:
+        # Return incumbent with its gap if not proven optimal
+        x_opt = np.array([[x[i].X] for i in range(n)])
+        return x_opt, model.objVal, model.MIPGap
     else:
-        return np.zeros((n, 1)), np.inf
+        return np.zeros((n, 1)), np.inf, np.inf
 
 
 def RMVP1_mipMOSEK(D, tau, tau_bar, gamma, beta):
@@ -920,6 +926,8 @@ def RMVP2_mipGUROBI(D, tau, tau_bar, gamma, beta, t):
     
     model.setParam('OutputFlag', 0)
     model.setParam('IntFeasTol', 1e-9)
+    # Time limit (seconds) ~ 1 hour
+    model.setParam('TimeLimit', 3600)
     
     model.optimize()
     
@@ -927,11 +935,13 @@ def RMVP2_mipGUROBI(D, tau, tau_bar, gamma, beta, t):
         x_opt = np.array([[x[i].x] for i in range(n)])
         # Post-process: set near-zero entries to exactly zero
         x_opt[np.abs(x_opt) < 1e-8] = 0.0
-        
-
-        return x_opt, model.objVal
+        return x_opt, model.objVal, model.MIPGap
+    elif model.SolCount > 0:
+        x_opt = np.array([[x[i].X] for i in range(n)])
+        x_opt[np.abs(x_opt) < 1e-8] = 0.0
+        return x_opt, model.objVal, model.MIPGap
     else:
-        return np.zeros((n, 1)), np.inf  # Use +inf for minimization failure
+        return np.zeros((n, 1)), np.inf, np.inf  # Use +inf for minimization failure
     
 def RMVP2_mipCVXPY(D, tau, tau_bar, gamma, beta, t):
     """
