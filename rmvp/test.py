@@ -189,11 +189,11 @@ def run_experiments_rmvp1():
 
     # Parameter ranges for experimentation
     rc_values = [0.0002, 0.0004]
-    beta_values = [1e-4, 1e-5, 5e-6, 1e-6]
-    target_return_factors = [1.05, 1.1, 1.15]
+    beta_values = [1e-3, 1e-4, 1e-5, 5e-6, 1e-6]
+    target_return_factors = [1.05, 1.1]
     
     # 0.0 triggers the dynamic calculation in generate_rmvp1_data
-    gamma_inputs = [0.001, 0.01,0.1, 0.0]
+    gamma_inputs = [0.001, 0.01, 0.0]
 
     # Generate combinations of parameters excluding gamma
     param_combinations = product(data_files, rc_values, beta_values, target_return_factors)
@@ -351,11 +351,11 @@ def run_experiments_rmvp2():
 
     # Parameter ranges for experimentation
     rc_values = [0.0002, 0.0004]
-    beta_values = [1e-4, 1e-5, 5e-6, 1e-6]
-    target_return_factors = [1.05, 1.1, 1.15]
+    beta_values = [1e-3, 1e-4, 1e-5, 5e-6, 1e-6]
+    target_return_factors = [1.05, 1.1]
     
     # 0.0 triggers the dynamic calculation in generate_rmvp1_data (called by generate_rmvp2_data)
-    gamma_inputs = [0.001, 0.01, 0.1, 0.0]
+    gamma_inputs = [0.001, 0.01, 0.0]
 
     # Generate combinations of parameters excluding gamma
     param_combinations = product(data_files, rc_values, beta_values, target_return_factors)

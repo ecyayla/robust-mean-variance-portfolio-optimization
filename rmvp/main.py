@@ -160,7 +160,7 @@ def branchVariable_rmvp1(x, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, br
     else:
         raise ValueError(f"Invalid branch rule: {branch_rule}")
     
-    return ind
+    return ind, bb_ind
 
 
 
@@ -253,7 +253,7 @@ def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='mosek', branch_rule='max_
             continue
         else:
             if len(Ssupp) >= 1:
-                ind = branchVariable_rmvp1(x1, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, branch_rule)
+                ind, bb_ind = branchVariable_rmvp1(x1, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, branch_rule)
             else:
                 tau_Psupp = tau[Psupp]
                 var = DD[Psupp]
@@ -262,8 +262,7 @@ def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='mosek', branch_rule='max_
                 ind = Psupp[bb_ind]
 
             left_supp = sorted(Ssupp + [ind])
-            Psupp.remove(ind)
-            Psupp = sorted(Psupp)
+            Psupp = list(np.delete(np.array(Psupp), bb_ind))
 
 
 
@@ -758,7 +757,7 @@ def branchVariable_rmvp2(x, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, br
     else:
         raise ValueError(f"Invalid branch rule: {branch_rule}")
     
-    return ind
+    return ind, bb_ind
 
 
 def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='mosek', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None):
@@ -809,7 +808,7 @@ def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='mosek', branch_rule='m
             continue
         else:
             if len(Ssupp) >= 1:
-                ind = branchVariable_rmvp2(x1, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, branch_rule)
+                ind, bb_ind = branchVariable_rmvp2(x1, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, branch_rule)
             else:
                 #bb_ind = 0
                 #ind = Psupp[bb_ind]
@@ -821,8 +820,7 @@ def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='mosek', branch_rule='m
                 ind = Psupp[bb_ind]
 
             left_supp = sorted(Ssupp + [ind])
-            Psupp.remove(ind)
-            Psupp = sorted(Psupp)
+            Psupp = list(np.delete(np.array(Psupp), bb_ind))
 
 
             #if len(Ssupp) == 0: print("Ssupp is empty")
