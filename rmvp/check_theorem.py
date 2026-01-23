@@ -7,7 +7,7 @@ from datetime import datetime
 from main import generate_rmvp1_data, mainRMVP1BnB, RMVP1_mipGUROBI, zeropadding
 
 
-def rmvp1_gloabal_lower_bound_check(D, tau, tau_bar, gamma, beta, x, tol=1e-8):
+def rmvp1_global_lower_bound_check(D, tau, tau_bar, gamma, beta, x, tol=1e-8):
     """
     Check the RMVP1 global lower-bound theorem for a given solution x (padded).
 
@@ -180,7 +180,7 @@ def run_rmvp1_boundcheck():
                 normD_bnb = np.sqrt(x_bnb.T @ D @ x_bnb)[0]
                 tau_minus_gamma_bnb = tauTx_bnb - gamma * normD_bnb
                 nnz_bnb = int(np.sum(np.abs(x_bnb) > 1e-8))
-                chk_bnb = rmvp1_gloabal_lower_bound_check(D, tau, tau_bar, gamma, beta_scaled, x_bnb)
+                chk_bnb = rmvp1_global_lower_bound_check(D, tau, tau_bar, gamma, beta_scaled, x_bnb)
                 bound_ok_bnb = chk_bnb["all_satisfied"]
                 bound_margin_bnb = _min_margin(chk_bnb)
                 print("bnb completed")
@@ -196,7 +196,7 @@ def run_rmvp1_boundcheck():
                 normD_mip_gurobi = np.sqrt(x_mip_gurobi.T @ D @ x_mip_gurobi)[0]
                 tau_minus_gamma_mip_gurobi = tauTx_mip_gurobi - gamma * normD_mip_gurobi
                 nnz_mip_gurobi = int(np.sum(np.abs(x_mip_gurobi) > 1e-8))
-                chk_gurobi = rmvp1_gloabal_lower_bound_check(D, tau, tau_bar, gamma, beta_scaled, x_mip_gurobi)
+                chk_gurobi = rmvp1_global_lower_bound_check(D, tau, tau_bar, gamma, beta_scaled, x_mip_gurobi)
                 bound_ok_gurobi = chk_gurobi["all_satisfied"]
                 bound_margin_gurobi = _min_margin(chk_gurobi)
                 print("mip gurobi completed")

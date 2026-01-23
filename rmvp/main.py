@@ -212,7 +212,7 @@ def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='mosek', branch_rule='max_
         raise ValueError(f"Invalid traverse rule: {traverse_rule}")
 
     ub = 10e10
-    global_ub = ub + 1e-4
+    global_ub = ub + 1e2
     
     # Solve initial relaxed problem
     x_init, lb, lambda_init = solveRMVP1(D, tau_bar, tau, gamma)
@@ -230,7 +230,7 @@ def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='mosek', branch_rule='max_
         [lb,ub,_,Ssupp,Psupp,x1,lambda_val] = q.get()
         #print("count: ", count)
         #print("lb: ", lb)
-        #print("ub: ", ub)
+        #print("global_ub: ", global_ub)
         #print("Ssupp: ", Ssupp)
         #print("Psupp: ", Psupp)
         #print("x1: ", x1)
@@ -243,7 +243,7 @@ def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='mosek', branch_rule='max_
             global_x = x1
 
 
-        if global_ub <= lb:
+        if global_ub - lb <= relErr:
             print("global_ub <= lb")
             break
         if abs(ub - lb) < relErr:

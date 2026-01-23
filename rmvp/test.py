@@ -189,7 +189,7 @@ def run_experiments_rmvp1():
 
     # Parameter ranges for experimentation
     rc_values = [0.0002, 0.0004]
-    beta_values = [1e-3, 1e-4, 1e-5, 5e-6, 1e-6]
+    beta_values = [1e-2, 1e-3]
     target_return_factors = [1.05, 1.1]
     
     # 0.0 triggers the dynamic calculation in generate_rmvp1_data
@@ -351,7 +351,7 @@ def run_experiments_rmvp2():
 
     # Parameter ranges for experimentation
     rc_values = [0.0002, 0.0004]
-    beta_values = [1e-3, 1e-4, 1e-5, 5e-6, 1e-6]
+    beta_values = [1e-4, 1e-5, 5e-6, 1e-6]
     target_return_factors = [1.05, 1.1]
     
     # 0.0 triggers the dynamic calculation in generate_rmvp1_data (called by generate_rmvp2_data)
@@ -488,8 +488,8 @@ def run_experiments_rmvp2():
 
 if __name__ == "__main__":
 
-    #run_experiments_rmvp1()
-    run_experiments_rmvp2()
+    run_experiments_rmvp1()
+    #run_experiments_rmvp2()
 
 
 
