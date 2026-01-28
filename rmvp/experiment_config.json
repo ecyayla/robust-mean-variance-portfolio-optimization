@@ -1,0 +1,73 @@
+{
+  "rmvp1": {
+    "datasets": {
+      "SP500_returns.xlsx": {
+        "enabled": false,
+        "rc_values": [0.0002, 0.0004],
+        "beta_values": [0.00005, 0.00001],
+        "target_return_factors": [1.05, 1.1, 1.15],
+        "gamma_inputs": [0.001, 0.01, 0.0]
+      },
+      "DowJones_returns.xlsx": {
+        "enabled": false,
+        "rc_values": [0.0002, 0.0004],
+        "beta_values": [0.001, 0.0005, 0.0001, 0.00005],
+        "target_return_factors": [1.05, 1.1, 1.15],
+        "gamma_inputs": [0.0005, 0.001, 0.01, 0.0]
+      },
+      "ETF.xlsx": {
+        "enabled": false,
+        "rc_values": [0.0002, 0.0004],
+        "beta_values": [0.001, 0.0005, 0.0001, 0.00005, 0.00001],
+        "target_return_factors": [1.05, 1.1, 1.15],
+        "gamma_inputs": [0.001, 0.01, 0.0]
+      },
+      "EuroBondsRet.xlsx": {
+        "enabled": false,
+        "rc_values": [0.0002, 0.0004],
+        "beta_values": [0.001, 0.0005, 0.0001, 0.00005, 0.00001, 0.000005, 0.000001],
+        "target_return_factors": [1.05, 1.1, 1.15],
+        "gamma_inputs": [0.001, 0.01, 0.0]
+      },
+      "EuroStoxx50_returns.xlsx": {
+        "enabled": false,
+        "rc_values": [0.0002, 0.0004],
+        "beta_values": [0.001, 0.0005, 0.0001],
+        "target_return_factors": [1.05, 1.1, 1.15],
+        "gamma_inputs": [0.001, 0.01, 0.0]
+      },
+      "FTSE100_returns.xlsx": {
+        "enabled": false,
+        "rc_values": [0.0002, 0.0004],
+        "beta_values": [0.001, 0.0005, 0.0001, 0.00005, 0.00001],
+        "target_return_factors": [1.05, 1.1, 1.15],
+        "gamma_inputs": [0.001, 0.01, 0.0]
+      },
+      "ItalianBondsandCommodities.xlsx": {
+        "enabled": false,
+        "rc_values": [0.0002, 0.0004],
+        "beta_values": [0.001, 0.0005, 0.0001, 0.00005, 0.00001],
+        "target_return_factors": [1.05, 1.1, 1.15],
+        "gamma_inputs": [0.001, 0.01, 0.0]
+      },
+      "NASDAQ100_returns.xlsx": {
+        "enabled": true,
+        "rc_values": [0.0002, 0.0004],
+        "beta_values": [0.001, 0.0005, 0.0001, 0.00005, 0.00001],
+        "target_return_factors": [1.05, 1.1, 1.15],
+        "gamma_inputs": [0.001, 0.01, 0.0]
+      }
+    }
+  },
+  "rmvp2": {
+    "datasets": {
+      "SP500_returns.xlsx": {
+        "rc_values": [0.0002, 0.0004],
+        "beta_values": [0.0001, 0.00001, 0.000005, 0.000001],
+        "target_return_factors": [1.05, 1.1],
+        "gamma_inputs": [0.001, 0.01, 0.0]
+      }
+    }
+  }
+}
+

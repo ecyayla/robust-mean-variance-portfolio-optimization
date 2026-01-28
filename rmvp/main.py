@@ -125,8 +125,8 @@ def rmvp1_lagrangian_gradient(x_s, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_
     DZS_xs = D_ZS @ x_s
     norm_x_D = float(np.sqrt(x_s.T @ (D_SS @ x_s)))
     
-    if norm_x_D < 1e-10:
-        norm_x_D = 1e-10  # Avoid division by zero
+    if norm_x_D < 1e-8:
+        norm_x_D = 1e-8  # Avoid division by zero
 
     # Gradient on Psupp: ∇_Z L = 2 D_{Z,S} x_S - λ * (tau_Z - gamma * (D_{Z,S} x_S) / ||x_S||_D)
     grad_z = 2 * DZS_xs - lambda_val * (tau_Z.reshape(-1, 1) - gamma * (DZS_xs / norm_x_D))
@@ -202,7 +202,7 @@ def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='mosek', branch_rule='max_
     count : int
         Number of nodes explored.
     """
-    relErr = 1e-10
+    relErr = 1e-8
 
     if traverse_rule == 'bfs':
         q = PriorityQueue()
@@ -369,15 +369,15 @@ def RMVP1_mipGUROBI(D, tau, tau_bar, gamma, beta):
 
     # Tighter tolerances for higher precision
     model.setParam('OutputFlag', 0)
-    model.setParam('IntFeasTol', 1e-9)
-    model.setParam('FeasibilityTol', 1e-9)
-    model.setParam('OptimalityTol', 1e-9)
-    model.setParam('MIPGap', 1e-9)
-    model.setParam('MIPGapAbs', 1e-9)
+    model.setParam('IntFeasTol', 1e-8)
+    model.setParam('FeasibilityTol', 1e-8)
+    model.setParam('OptimalityTol', 1e-8)
+    model.setParam('MIPGap', 1e-8)
+    model.setParam('MIPGapAbs', 1e-8)
     # Improve numeric robustness
     model.setParam('NumericFocus', 3)
-    model.setParam('BarConvTol', 1e-9)
-    model.setParam('BarQCPConvTol', 1e-9)
+    model.setParam('BarConvTol', 1e-8)
+    model.setParam('BarQCPConvTol', 1e-8)
     # Time limit (seconds) ~ 1 hour
     model.setParam('TimeLimit', 3600)
 
@@ -605,7 +605,7 @@ def RMVP1_mipCVXPY(D, tau, tau_bar, gamma, beta):
     if problem.status == cp.OPTIMAL:
         x_opt = x.value.reshape(-1, 1)
         # Post-process: set near-zero entries to exactly zero
-        #x_opt[np.abs(x_opt) < 1e-4] = 0.0
+        #x_opt[np.abs(x_opt) < 1e-8] = 0.0
         obj_val = problem.value
         return x_opt, obj_val
     else:
@@ -722,8 +722,8 @@ def rmvp2_lagrangian_gradient(x_s, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_
     DZS_xs = D_ZS @ x_s
     norm_x_D = np.sqrt(x_s.T @ (D_SS @ x_s))
     
-    if norm_x_D < 1e-10:
-        norm_x_D = 1e-10  # Avoid division by zero
+    if norm_x_D < 1e-8:
+        norm_x_D = 1e-8  # Avoid division by zero
 
     # Gradient on Psupp: ∇_Z L = tau_Z - (gamma + lambda) * (D_{Z,S} x_S) / ||x_S||_D
     grad_z = tau_Z.reshape(-1, 1) - (gamma + lambda_val) * (DZS_xs / norm_x_D)
@@ -764,7 +764,7 @@ def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='mosek', branch_rule='m
     """
     Branch-and-bound algorithm for CP-RMVP2 problem (same structure as mainRMVP1BnB).
     """
-    relErr = 1e-10
+    relErr = 1e-8
 
     if traverse_rule == 'bfs':
         q = PriorityQueue()
@@ -923,7 +923,7 @@ def RMVP2_mipGUROBI(D, tau, tau_bar, gamma, beta, t):
     model.addConstrs(x[i] >= -M * z[i] for i in range(n))
     
     model.setParam('OutputFlag', 0)
-    model.setParam('IntFeasTol', 1e-9)
+    model.setParam('IntFeasTol', 1e-8)
     # Time limit (seconds) ~ 1 hour
     model.setParam('TimeLimit', 3600)
     
@@ -1107,7 +1107,7 @@ def generate_test_instance_rmvp1(n, seed=None, beta=None, gamma=None, r_c=None, 
     # Calculate ratios for gamma logic
     D_diag_sqrt = np.sqrt(np.diag(D))
     # Avoid division by zero
-    ratios = np.abs(tau) / np.maximum(D_diag_sqrt, 1e-12)
+    ratios = np.abs(tau) / np.maximum(D_diag_sqrt, 1e-8)
     min_ratio = np.min(ratios)
     
     
@@ -1198,7 +1198,7 @@ def test_rmvp1_solvers(n=10, seed=42, verbose=True):
     print("-" * 80)
     start_time = time.time()
     x_mip, obj_mip = RMVP1_mipCVXPY(D, tau, tau_bar, gamma, beta)
-    obj_mip = (x_mip.T @ D @ x_mip + beta * np.sum(np.abs(x_mip) > 1e-6))[0][0]
+    obj_mip = (x_mip.T @ D @ x_mip + beta * np.sum(np.abs(x_mip) > 1e-8))[0][0]
     
     mip_time = time.time() - start_time
     const = tau.T @ x_mip - gamma * np.sqrt(x_mip.T @ D @ x_mip)
@@ -1211,8 +1211,8 @@ def test_rmvp1_solvers(n=10, seed=42, verbose=True):
         print(f"  - Solve time: {mip_time:.4f} seconds")
         print(f"  - Solution x:")
         print(f"    {x_mip.flatten()}")
-        print(f"  - Non-zero components: {np.sum(np.abs(x_mip) > 1e-6)}")
-        print(f"  - Support: {np.where(np.abs(x_mip.flatten()) > 1e-6)[0].tolist()}")
+        print(f"  - Non-zero components: {np.sum(np.abs(x_mip) > 1e-8)}")
+        print(f"  - Support: {np.where(np.abs(x_mip.flatten()) > 1e-8)[0].tolist()}")
     
     results['mip_solution'] = {
         'x': x_mip,
@@ -1227,7 +1227,7 @@ def test_rmvp1_solvers(n=10, seed=42, verbose=True):
     start_time = time.time()
     x_bnb, obj_bnb, supp_bnb, count_bnb = mainRMVP1BnB(D, tau, tau_bar, gamma, beta)
     x_bnb = zeropadding(x_bnb, supp_bnb, n)
-    obj_bnb = (x_bnb.T @ D @ x_bnb + beta * np.sum(np.abs(x_bnb) > 1e-6))[0][0]
+    obj_bnb = (x_bnb.T @ D @ x_bnb + beta * np.sum(np.abs(x_bnb) > 1e-8))[0][0]
     bnb_time = time.time() - start_time
     const = tau.T @ x_bnb - gamma * np.sqrt(x_bnb.T @ D @ x_bnb)
     print("const: ", const)
@@ -1504,7 +1504,7 @@ def test_rmvp2_solvers(n=10, seed=42, verbose=True):
     # Recompute objective to ensure consistency
     if obj_gurobi > -np.inf:
         norm_D_gurobi = np.sqrt(x_gurobi.T @ D @ x_gurobi)[0,0]
-        l0_gurobi = np.sum(np.abs(x_gurobi) > 1e-6)
+        l0_gurobi = np.sum(np.abs(x_gurobi) > 1e-8)
         obj_gurobi_recalc = -(tau.T @ x_gurobi)[0] + tau_bar + gamma * norm_D_gurobi + beta * l0_gurobi
     else:
         obj_gurobi_recalc = -np.inf
@@ -1517,7 +1517,7 @@ def test_rmvp2_solvers(n=10, seed=42, verbose=True):
         print(f"  - Objective value: {obj_gurobi_recalc:.6f}")
         print(f"  - Solve time: {gurobi_time:.4f} seconds")
         print(f"  - Solution x norm_D: {norm_D_gurobi:.6f} (<= {t:.6f})")
-        print(f"  - Non-zero components: {np.sum(np.abs(x_gurobi) > 1e-6)}")
+        print(f"  - Non-zero components: {np.sum(np.abs(x_gurobi) > 1e-8)}")
         #print("x_gurobi: ", x_gurobi)
     
     results['mip_gurobi'] = {
@@ -1537,7 +1537,7 @@ def test_rmvp2_solvers(n=10, seed=42, verbose=True):
     if obj_cvxpy > -np.inf:
 
         norm_D_cvxpy = np.sqrt(x_cvxpy.T @ D @ x_cvxpy)[0,0]
-        l0_cvxpy = np.sum(np.abs(x_cvxpy) > 1e-6)
+        l0_cvxpy = np.sum(np.abs(x_cvxpy) > 1e-8)
         obj_cvxpy_recalc = -(tau.T @ x_cvxpy)[0] + tau_bar + gamma * norm_D_cvxpy + beta * l0_cvxpy
     else:
         obj_cvxpy_recalc = -np.inf
@@ -1550,7 +1550,7 @@ def test_rmvp2_solvers(n=10, seed=42, verbose=True):
         print(f"  - Objective value: {obj_cvxpy_recalc:.6f}")
         print(f"  - Solve time: {cvxpy_time:.4f} seconds")
         print(f"  - Solution x norm_D: {norm_D_cvxpy:.6f} (<= {t:.6f})")
-        print(f"  - Non-zero components: {np.sum(np.abs(x_cvxpy) > 1e-6)}")
+        print(f"  - Non-zero components: {np.sum(np.abs(x_cvxpy) > 1e-8)}")
         #print("x_cvxpy: ", x_cvxpy)
     results['mip_cvxpy'] = {
         'x': x_cvxpy,
@@ -1652,7 +1652,7 @@ def check_proposition_rmvp1(n=30, seed=42):
     diag_L = np.diag(L)
     
     # Identify support
-    support = np.where(np.abs(x_opt) > 1e-6)[0]
+    support = np.where(np.abs(x_opt) > 1e-8)[0]
     print("x_opt: ", x_opt)
     print(f"Optimal objective: {obj_val:.6f}")
     print(f"Support size: {len(support)}")
@@ -1673,7 +1673,7 @@ def check_proposition_rmvp1(n=30, seed=42):
         norm_D_new = np.sqrt(x_new.T @ D @ x_new)
         robust_lhs = tau.T @ x_new - gamma * norm_D_new
         
-        is_feasible = robust_lhs >= tau_bar - 1e-6 # Tolerance
+        is_feasible = robust_lhs >= tau_bar - 1e-8 # Tolerance
         
         L_ii = diag_L[i]
         bound = np.sqrt(beta / L_ii)
@@ -1846,7 +1846,7 @@ if __name__ == "__main__":
 
     x_bnb, obj_bnb, supp_bnb, count_bnb = mainRMVP1BnB(D, tau, tau_bar, gamma, beta)
     x_bnb = zeropadding(x_bnb, supp_bnb, n)
-    obj_bnb = (x_bnb.T @ D @ x_bnb + beta * np.sum(np.abs(x_bnb) > 1e-6))[0][0]
+    obj_bnb = (x_bnb.T @ D @ x_bnb + beta * np.sum(np.abs(x_bnb) > 1e-8))[0][0]
     const = tau.T @ x_bnb - gamma * np.sqrt(x_bnb.T @ D @ x_bnb)
     print("const BNB: ", const)
     print("obj_bnb: ", obj_bnb)
@@ -1855,14 +1855,14 @@ if __name__ == "__main__":
     print("x_bnb: ", x_bnb)
 
     x_mip, obj_mip = RMVP1_mipMOSEK(D, tau, tau_bar, gamma, beta)
-    obj_mip = (x_mip.T @ D @ x_mip + beta * np.sum(np.abs(x_mip) > 1e-6))[0][0]
+    obj_mip = (x_mip.T @ D @ x_mip + beta * np.sum(np.abs(x_mip) > 1e-8))[0][0]
     const = tau.T @ x_mip - gamma * np.sqrt(x_mip.T @ D @ x_mip)
     print("const MOSEK: ", const)
     print("obj_mip MOSEK: ", obj_mip)
     print("x_mip MOSEK: ", x_mip)
 
     x_mip, obj_mip = RMVP1_mipCVXPY(D, tau, tau_bar, gamma, beta)
-    obj_mip = (x_mip.T @ D @ x_mip + beta * np.sum(np.abs(x_mip) > 1e-6))[0][0]
+    obj_mip = (x_mip.T @ D @ x_mip + beta * np.sum(np.abs(x_mip) > 1e-8))[0][0]
     const = tau.T @ x_mip - gamma * np.sqrt(x_mip.T @ D @ x_mip)
     print("const CVXPY: ", const)
     print("obj_mip CVXPY: ", obj_mip)
