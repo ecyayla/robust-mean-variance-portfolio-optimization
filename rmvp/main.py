@@ -169,38 +169,6 @@ def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='mosek', branch_rule='max_
     """
     Branch-and-bound algorithm for CP-RMVP problem:
         min_{x in R^n} x^T D x  s.t.  tau^T x - gamma * ||x||_D >= tau_bar
-    
-    Parameters
-    ----------
-    D : (n, n) array_like
-        Positive semidefinite symmetric matrix D.
-    tau : (n,) array_like
-        The excess mean return vector estimate tau (ccr in the problem).
-    tau_bar : float
-        Scalar parameter tau_bar (bar{ccr} in the problem).
-    gamma : float
-        Ellipsoidal uncertainty radius γ.
-    beta : float
-        Sparsity penalty parameter.
-    method : str, optional
-        Solver method (not used currently).
-    branch_rule : str, optional
-        Branching rule ('max_lagrangian_grad').
-    traverse_rule : str, optional
-        Traversal rule ('bfs' or 'dfs').
-    time_limit : float, optional
-        Time limit for the algorithm.
-    
-    Returns
-    -------
-    global_x : (n,) ndarray
-        Optimal solution.
-    global_ub : float
-        Global upper bound (optimal objective value).
-    global_supp : list
-        Support of the optimal solution.
-    count : int
-        Number of nodes explored.
     """
     relErr = 1e-8
 
@@ -213,35 +181,26 @@ def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='mosek', branch_rule='max_
 
     ub = 10e10
     global_ub = ub + 1e2
-    
-    # Solve initial relaxed problem
+
     x_init, lb, lambda_init = solveRMVP1(D, tau_bar, tau, gamma)
 
-
-    global_supp = []
-    Ssupp = []
-    Psupp = list(range(D.shape[1]))
+    n = D.shape[1]
+    global_supp = np.array([], dtype=np.int32)
+    Ssupp = np.array([], dtype=np.int32)
+    Psupp = np.arange(n, dtype=np.int32)
     DD = np.diag(D)
-    
-    q.put([lb,ub,0,Ssupp,Psupp,x_init,lambda_init])
+
+    q.put([lb, ub, 0, Ssupp, Psupp, x_init, lambda_init])
 
     count = 0
     while q.qsize() >= 1:
-        [lb,ub,_,Ssupp,Psupp,x1,lambda_val] = q.get()
-        #print("count: ", count)
-        #print("lb: ", lb)
-        #print("global_ub: ", global_ub)
-        #print("Ssupp: ", Ssupp)
-        #print("Psupp: ", Psupp)
-        #print("x1: ", x1)
-        #print("lambda_val: ", lambda_val)
-
+        [lb, ub, _, Ssupp, Psupp, x1, lambda_val] = q.get()
         count += 1
+
         if ub - global_ub < relErr:
             global_ub = ub
             global_supp = Ssupp
             global_x = x1
-
 
         if global_ub - lb <= relErr:
             print("global_ub <= lb")
@@ -249,57 +208,180 @@ def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='mosek', branch_rule='max_
         if abs(ub - lb) < relErr:
             print("abs(ub - lb) < relErr")
             continue
-        if len(Psupp) == 0:
+        if Psupp.size == 0:
             continue
+
+        if Ssupp.size >= 1:
+            ind, bb_ind = branchVariable_rmvp1(x1, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, branch_rule)
         else:
-            if len(Ssupp) >= 1:
-                ind, bb_ind = branchVariable_rmvp1(x1, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, branch_rule)
-            else:
-                tau_Psupp = tau[Psupp]
-                var = DD[Psupp]
-                bb_dec = var/(tau_Psupp+1e-8)
-                bb_ind = np.argmin(bb_dec)
-                ind = Psupp[bb_ind]
+            tau_Psupp = tau[Psupp]
+            var = DD[Psupp]
+            bb_dec = var / (tau_Psupp + 1e-8)
+            bb_ind = int(np.argmin(bb_dec))
+            ind = int(Psupp[bb_ind])
 
-            left_supp = sorted(Ssupp + [ind])
-            Psupp = list(np.delete(np.array(Psupp), bb_ind))
+        left_supp = np.sort(np.append(Ssupp, ind)).astype(np.int32)
+        Psupp = np.delete(Psupp, bb_ind)
 
+        if (Ssupp.size + Psupp.size) >= 1:
+            w = np.concatenate((Ssupp, Psupp)).astype(np.int32)
+            D_w = D[np.ix_(w, w)]
+            tau_w = tau[w]
 
+            x_w_opt, right_lb, lambda_val = solveRMVP1(D_w, tau_bar, tau_w, gamma)
+            right_lb = right_lb + beta * Ssupp.size
 
-            if len(Ssupp) + len(Psupp) >= 1: # Since right_sup = Ssupp + Psupp
-                w = Ssupp + Psupp
-                D_w = D[w,:][:,w]
-                tau_w = tau[w]
+            q.put([right_lb, ub, np.random.rand(), Ssupp, Psupp, x1, lambda_val])
 
-                x_w_opt, right_lb, lambda_val = solveRMVP1(D_w, tau_bar, tau_w, gamma)
-                right_lb = right_lb + beta * len(Ssupp)
+        if left_supp.size >= 1:
+            w = left_supp
+            D_w = D[np.ix_(w, w)]
+            tau_w = tau[w]
 
+            x_w_opt, left_ub, lambda_val = solveRMVP1(D_w, tau_bar, tau_w, gamma)
+            left_ub = left_ub + beta * left_supp.size
 
-                q.put([right_lb,ub,np.random.rand(),Ssupp,Psupp,x1,lambda_val]) # TODO: x1 değişecek
-                
+            q.put([lb + beta, left_ub, np.random.rand(), left_supp, Psupp, x_w_opt, lambda_val])
 
-            
-            if len(left_supp) >= 1:
-                w = left_supp
-                D_w = D[w,:][:,w]
-                tau_w = tau[w]
-
-
-                x_w_opt, left_ub, lambda_val = solveRMVP1(D_w, tau_bar, tau_w, gamma)
-                left_ub = left_ub + beta * len(left_supp)
-
-                q.put([lb+beta,left_ub,np.random.rand(),left_supp,Psupp,x_w_opt,lambda_val])
-            
-            else:
-                q.put([lb+beta,ub,np.random.rand(),left_supp,Psupp,x1,lambda_val])
-
-    global_supp = sorted(global_supp)
-    #print("count: ", count)
+    global_supp = np.array(sorted(global_supp.tolist()), dtype=np.int32)
     return global_x, global_ub, global_supp, count
 
+# Old implementation (commented)
+# def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='mosek', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None):
+#     """
+#     Branch-and-bound algorithm for CP-RMVP problem:
+#         min_{x in R^n} x^T D x  s.t.  tau^T x - gamma * ||x||_D >= tau_bar
+#     
+#     Parameters
+#     ----------
+#     D : (n, n) array_like
+#         Positive semidefinite symmetric matrix D.
+#     tau : (n,) array_like
+#         The excess mean return vector estimate tau (ccr in the problem).
+#     tau_bar : float
+#         Scalar parameter tau_bar (bar{ccr} in the problem).
+#     gamma : float
+#         Ellipsoidal uncertainty radius γ.
+#     beta : float
+#         Sparsity penalty parameter.
+#     method : str, optional
+#         Solver method (not used currently).
+#     branch_rule : str, optional
+#         Branching rule ('max_lagrangian_grad').
+#     traverse_rule : str, optional
+#         Traversal rule ('bfs' or 'dfs').
+#     time_limit : float, optional
+#         Time limit for the algorithm.
+#     
+#     Returns
+#     -------
+#     global_x : (n,) ndarray
+#         Optimal solution.
+#     global_ub : float
+#         Global upper bound (optimal objective value).
+#     global_supp : list
+#         Support of the optimal solution.
+#     count : int
+#         Number of nodes explored.
+#     """
+#     relErr = 1e-8
+# 
+#     if traverse_rule == 'bfs':
+#         q = PriorityQueue()
+#     elif traverse_rule == 'dfs':
+#         q = LifoQueue()
+#     else:
+#         raise ValueError(f"Invalid traverse rule: {traverse_rule}")
+# 
+#     ub = 10e10
+#     global_ub = ub + 1e2
+#     
+#     # Solve initial relaxed problem
+#     x_init, lb, lambda_init = solveRMVP1(D, tau_bar, tau, gamma)
+# 
+# 
+#     global_supp = []
+#     Ssupp = []
+#     Psupp = list(range(D.shape[1]))
+#     DD = np.diag(D)
+#     
+#     q.put([lb,ub,0,Ssupp,Psupp,x_init,lambda_init])
+# 
+#     count = 0
+#     while q.qsize() >= 1:
+#         [lb,ub,_,Ssupp,Psupp,x1,lambda_val] = q.get()
+#         #print("count: ", count)
+#         #print("lb: ", lb)
+#         #print("global_ub: ", global_ub)
+#         #print("Ssupp: ", Ssupp)
+#         #print("Psupp: ", Psupp)
+#         #print("x1: ", x1)
+#         #print("lambda_val: ", lambda_val)
+# 
+#         count += 1
+#         if ub - global_ub < relErr:
+#             global_ub = ub
+#             global_supp = Ssupp
+#             global_x = x1
+# 
+# 
+#         if global_ub - lb <= relErr:
+#             print("global_ub <= lb")
+#             break
+#         if abs(ub - lb) < relErr:
+#             print("abs(ub - lb) < relErr")
+#             continue
+#         if len(Psupp) == 0:
+#             continue
+#         else:
+#             if len(Ssupp) >= 1:
+#                 ind, bb_ind = branchVariable_rmvp1(x1, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, branch_rule)
+#             else:
+#                 tau_Psupp = tau[Psupp]
+#                 var = DD[Psupp]
+#                 bb_dec = var/(tau_Psupp+1e-8)
+#                 bb_ind = np.argmin(bb_dec)
+#                 ind = Psupp[bb_ind]
+# 
+#             left_supp = sorted(Ssupp + [ind])
+#             Psupp = list(np.delete(np.array(Psupp), bb_ind))
+# 
+# 
+# 
+#             if len(Ssupp) + len(Psupp) >= 1: # Since right_sup = Ssupp + Psupp
+#                 w = Ssupp + Psupp
+#                 D_w = D[w,:][:,w]
+#                 tau_w = tau[w]
+# 
+#                 x_w_opt, right_lb, lambda_val = solveRMVP1(D_w, tau_bar, tau_w, gamma)
+#                 right_lb = right_lb + beta * len(Ssupp)
+# 
+# 
+#                 q.put([right_lb,ub,np.random.rand(),Ssupp,Psupp,x1,lambda_val])
+#                 
+# 
+#             
+#             if len(left_supp) >= 1:
+#                 w = left_supp
+#                 D_w = D[w,:][:,w]
+#                 tau_w = tau[w]
+# 
+# 
+#                 x_w_opt, left_ub, lambda_val = solveRMVP1(D_w, tau_bar, tau_w, gamma)
+#                 left_ub = left_ub + beta * len(left_supp)
+# 
+#                 q.put([lb+beta,left_ub,np.random.rand(),left_supp,Psupp,x_w_opt,lambda_val])
+#             
+#             else:
+#                 q.put([lb+beta,ub,np.random.rand(),left_supp,Psupp,x1,lambda_val])
+# 
+#     global_supp = sorted(global_supp)
+#     #print("count: ", count)
+#     return global_x, global_ub, global_supp, count
 
 
-def RMVP1_mipGUROBI(D, tau, tau_bar, gamma, beta):
+
+def RMVP1_mipGUROBI(D, tau, tau_bar, gamma, beta, threads=1):
     """
     Mixed-integer programming formulation for CP-RMVP problem:
         min_{x in R^n} x^T D x + beta * ||x||_0  s.t.  tau^T x - gamma * ||x||_D >= tau_bar
@@ -369,6 +451,7 @@ def RMVP1_mipGUROBI(D, tau, tau_bar, gamma, beta):
 
     # Tighter tolerances for higher precision
     model.setParam('OutputFlag', 0)
+    #model.setParam('Threads', threads)
     model.setParam('IntFeasTol', 1e-8)
     model.setParam('FeasibilityTol', 1e-8)
     model.setParam('OptimalityTol', 1e-8)
@@ -775,21 +858,20 @@ def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='mosek', branch_rule='m
 
     ub = 10e10
     global_ub = ub + 1e-4
-    
-    # Solve initial relaxed problem
+
     x_init, lb, lambda_init = solveRMVP2(D, tau_bar, tau, gamma, beta, t)
 
-
-    global_supp = []
-    Ssupp = []
-    Psupp = list(range(D.shape[1]))
+    n = D.shape[1]
+    global_supp = np.array([], dtype=np.int32)
+    Ssupp = np.array([], dtype=np.int32)
+    Psupp = np.arange(n, dtype=np.int32)
     DD = np.diag(D)
-    
-    q.put([lb,ub,0,Ssupp,Psupp,x_init,lambda_init])
+
+    q.put([lb, ub, 0, Ssupp, Psupp, x_init, lambda_init])
 
     count = 0
     while q.qsize() >= 1:
-        [lb,ub,_,Ssupp,Psupp,x1,lambda_val] = q.get()
+        [lb, ub, _, Ssupp, Psupp, x1, lambda_val] = q.get()
 
         count += 1
         if ub - global_ub < relErr:
@@ -797,69 +879,151 @@ def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='mosek', branch_rule='m
             global_supp = Ssupp
             global_x = x1
 
-
         if global_ub <= lb:
             print("global_ub <= lb")
             break
         if abs(ub - lb) < relErr:
             print("abs(ub - lb) < relErr")
             continue
-        if len(Psupp) == 0:
+        if Psupp.size == 0:
             continue
+
+        if Ssupp.size >= 1:
+            ind, bb_ind = branchVariable_rmvp2(x1, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, branch_rule)
         else:
-            if len(Ssupp) >= 1:
-                ind, bb_ind = branchVariable_rmvp2(x1, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, branch_rule)
-            else:
-                #bb_ind = 0
-                #ind = Psupp[bb_ind]
+            tau_Psupp = tau[Psupp]
+            var = DD[Psupp]
+            bb_dec = var / (tau_Psupp + 1e-8)
+            bb_ind = int(np.argmin(bb_dec))
+            ind = int(Psupp[bb_ind])
 
-                tau_Psupp = tau[Psupp]
-                var = DD[Psupp]
-                bb_dec = var/(tau_Psupp+1e-8)
-                bb_ind = np.argmin(bb_dec)
-                ind = Psupp[bb_ind]
+        left_supp = np.sort(np.append(Ssupp, ind)).astype(np.int32)
+        Psupp = np.delete(Psupp, bb_ind)
 
-            left_supp = sorted(Ssupp + [ind])
-            Psupp = list(np.delete(np.array(Psupp), bb_ind))
+        if (Ssupp.size + Psupp.size) >= 1:  # Since right_sup = Ssupp + Psupp
+            w = np.concatenate((Ssupp, Psupp)).astype(np.int32)
+            D_w = D[np.ix_(w, w)]
+            tau_w = tau[w]
 
+            x_w_opt, right_lb, lambda_val = solveRMVP2(D_w, tau_bar, tau_w, gamma, beta, t)
+            right_lb = right_lb + beta * Ssupp.size
 
-            #if len(Ssupp) == 0: print("Ssupp is empty")
+            q.put([right_lb, ub, np.random.rand(), Ssupp, Psupp, x1, lambda_val])
 
+        if left_supp.size >= 1:
+            w = left_supp
+            D_w = D[np.ix_(w, w)]
+            tau_w = tau[w]
 
+            x_w_opt, left_ub, lambda_val = solveRMVP2(D_w, tau_bar, tau_w, gamma, beta, t)
+            left_ub = left_ub + beta * left_supp.size
 
-            if len(Ssupp) + len(Psupp) >= 0: # Since right_sup = Ssupp + Psupp
-                w = Ssupp + Psupp
-                D_w = D[w,:][:,w]
-                tau_w = tau[w]
+            q.put([lb + beta, left_ub, np.random.rand(), left_supp, Psupp, x_w_opt, lambda_val])
 
-                x_w_opt, right_lb, lambda_val = solveRMVP2(D_w, tau_bar, tau_w, gamma, beta, t)
-                right_lb = right_lb + beta * len(Ssupp)
-
-
-                q.put([right_lb,ub,np.random.rand(),Ssupp,Psupp,x1,lambda_val]) # TODO: x1 değişecek
-                
-
-            
-            if len(left_supp) >= 0: 
-                w = left_supp
-                D_w = D[w,:][:,w]
-                tau_w = tau[w]
-
-
-                x_w_opt, left_ub, lambda_val = solveRMVP2(D_w, tau_bar, tau_w, gamma, beta, t)
-                left_ub = left_ub + beta * len(left_supp)
-
-                q.put([lb+beta,left_ub,np.random.rand(),left_supp,Psupp,x_w_opt,lambda_val])
-            
-            else:
-                q.put([lb+beta,ub,np.random.rand(),left_supp,Psupp,x1,lambda_val])
-
-    global_supp = sorted(global_supp)
-    #print("count: ", count)
+    global_supp = np.array(sorted(global_supp.tolist()), dtype=np.int32)
     return global_x, global_ub, global_supp, count
 
+# Old implementation (commented)
+# def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='mosek', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None):
+#     """
+#     Branch-and-bound algorithm for CP-RMVP2 problem (same structure as mainRMVP1BnB).
+#     """
+#     relErr = 1e-8
+# 
+#     if traverse_rule == 'bfs':
+#         q = PriorityQueue()
+#     elif traverse_rule == 'dfs':
+#         q = LifoQueue()
+#     else:
+#         raise ValueError(f"Invalid traverse rule: {traverse_rule}")
+# 
+#     ub = 10e10
+#     global_ub = ub + 1e-4
+#     
+#     # Solve initial relaxed problem
+#     x_init, lb, lambda_init = solveRMVP2(D, tau_bar, tau, gamma, beta, t)
+# 
+# 
+#     global_supp = []
+#     Ssupp = []
+#     Psupp = list(range(D.shape[1]))
+#     DD = np.diag(D)
+#     
+#     q.put([lb,ub,0,Ssupp,Psupp,x_init,lambda_init])
+# 
+#     count = 0
+#     while q.qsize() >= 1:
+#         [lb,ub,_,Ssupp,Psupp,x1,lambda_val] = q.get()
+# 
+#         count += 1
+#         if ub - global_ub < relErr:
+#             global_ub = ub
+#             global_supp = Ssupp
+#             global_x = x1
+# 
+# 
+#         if global_ub <= lb:
+#             print("global_ub <= lb")
+#             break
+#         if abs(ub - lb) < relErr:
+#             print("abs(ub - lb) < relErr")
+#             continue
+#         if len(Psupp) == 0:
+#             continue
+#         else:
+#             if len(Ssupp) >= 1:
+#                 ind, bb_ind = branchVariable_rmvp2(x1, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, branch_rule)
+#             else:
+#                 #bb_ind = 0
+#                 #ind = Psupp[bb_ind]
+# 
+#                 tau_Psupp = tau[Psupp]
+#                 var = DD[Psupp]
+#                 bb_dec = var/(tau_Psupp+1e-8)
+#                 bb_ind = np.argmin(bb_dec)
+#                 ind = Psupp[bb_ind]
+# 
+#             left_supp = sorted(Ssupp + [ind])
+#             Psupp = list(np.delete(np.array(Psupp), bb_ind))
+# 
+# 
+#             #if len(Ssupp) == 0: print("Ssupp is empty")
+# 
+# 
+# 
+#             if len(Ssupp) + len(Psupp) >= 1: # Since right_sup = Ssupp + Psupp
+#                 w = Ssupp + Psupp
+#                 D_w = D[w,:][:,w]
+#                 tau_w = tau[w]
+# 
+#                 x_w_opt, right_lb, lambda_val = solveRMVP2(D_w, tau_bar, tau_w, gamma, beta, t)
+#                 right_lb = right_lb + beta * len(Ssupp)
+# 
+# 
+#                 q.put([right_lb,ub,np.random.rand(),Ssupp,Psupp,x1,lambda_val])
+#                 
+# 
+#             
+#             if len(left_supp) >= 1: 
+#                 w = left_supp
+#                 D_w = D[w,:][:,w]
+#                 tau_w = tau[w]
+# 
+# 
+#                 x_w_opt, left_ub, lambda_val = solveRMVP2(D_w, tau_bar, tau_w, gamma, beta, t)
+#                 left_ub = left_ub + beta * len(left_supp)
+# 
+#                 q.put([lb+beta,left_ub,np.random.rand(),left_supp,Psupp,x_w_opt,lambda_val])
+#             
+#             else:
+#                 q.put([lb+beta,ub,np.random.rand(),left_supp,Psupp,x1,lambda_val])
+# 
+#     global_supp = sorted(global_supp)
+#     #print("count: ", count)
+#     return global_x, global_ub, global_supp, count
 
-def RMVP2_mipGUROBI(D, tau, tau_bar, gamma, beta, t):
+
+def RMVP2_mipGUROBI(D, tau, tau_bar, gamma, beta, t, threads=1):
     """
     Mixed-integer programming formulation for CP-RMVP2 problem:
         min_{x in R^N} -tau^T x + tau_bar + gamma * ||x||_D + beta * ||x||_0  s.t. ||x||_D <= t
@@ -923,6 +1087,7 @@ def RMVP2_mipGUROBI(D, tau, tau_bar, gamma, beta, t):
     model.addConstrs(x[i] >= -M * z[i] for i in range(n))
     
     model.setParam('OutputFlag', 0)
+    #model.setParam('Threads', threads)
     model.setParam('IntFeasTol', 1e-8)
     # Time limit (seconds) ~ 1 hour
     model.setParam('TimeLimit', 3600)
