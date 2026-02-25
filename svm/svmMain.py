@@ -210,12 +210,12 @@ def lagrangian_gradient(alpha_s, Q, Ssupp, Psupp):
     grad_p : (|Psupp|, 1)
         Raw gradient components for Psupp.
     """
-    Ssupp = np.asarray(Ssupp, dtype=int)
-    Psupp = np.asarray(Psupp, dtype=int)
+    Ssupp = np.asarray(Ssupp, dtype=np.int32)
+    Psupp = np.asarray(Psupp, dtype=np.int32)
 
     if len(Ssupp) > 0:
         alpha_s = alpha_s.reshape(-1, 1)
-        Q_ps = Q[np.ix_(Psupp, Ssupp)]
+        Q_ps = Q[Psupp][:, Ssupp]
         grad_p = (Q_ps @ alpha_s).reshape(-1) - 1.0
     else:
         grad_p = -np.ones(len(Psupp))
@@ -339,7 +339,7 @@ def solveSVM_DualMosek(Q, y, precision_tol=1e-8):
     return alpha_opt, obj_val
 
 
-def solveSVM_DualCvxpy(Q, y, max_iter=10000, solver="SCS"):
+def solveSVM_DualCvxpy(Q, y, max_iter=10000, solver="SCS", alpha0=None):
     """
     Solve the SVM dual problem using CVXPY.
     
@@ -366,6 +366,11 @@ def solveSVM_DualCvxpy(Q, y, max_iter=10000, solver="SCS"):
     y = np.asarray(y, dtype=float).flatten()
     m = Q.shape[0]
     alpha = cp.Variable(m)
+    if alpha0 is not None:
+        try:
+            alpha.value = np.asarray(alpha0, dtype=float).reshape(-1)
+        except Exception:
+            alpha.value = None
     constraints = [y.T @ alpha == 0, alpha >= 0]
     objective = cp.Minimize(0.5 * cp.quad_form(alpha, cp.psd_wrap(Q)) - cp.sum(alpha))
     problem = cp.Problem(objective, constraints)
@@ -389,7 +394,7 @@ def solveSVM_DualCvxpy(Q, y, max_iter=10000, solver="SCS"):
     else:
         solver_kwargs = {'solver': solver, 'max_iters': max_iter}
     
-    problem.solve(verbose=False, **solver_kwargs)
+    problem.solve(verbose=False, warm_start=alpha0 is not None, **solver_kwargs)
 
     if problem.status == cp.OPTIMAL:
         return alpha.value, problem.value
@@ -400,13 +405,20 @@ def solveSVM_DualCvxpy(Q, y, max_iter=10000, solver="SCS"):
         return np.zeros((m, 1)), np.inf
 
 
-def solveSVM(Q, y, method='mosek'):
+def solveSVM(Q, y, method='mosek', meta_in=None):
+    alpha0 = None
+    if meta_in is not None:
+        alpha0 = meta_in.get("alpha0", None)
+
     if method == 'mosek':
-        return solveSVM_DualMosek(Q, y)
+        alpha_opt, obj_val = solveSVM_DualMosek(Q, y)
     elif method == 'cvxpy':
-        return solveSVM_DualCvxpy(Q, y)
+        alpha_opt, obj_val = solveSVM_DualCvxpy(Q, y, alpha0=alpha0)
     else:
         raise ValueError(f"Invalid method: {method}")
+
+    meta_out = {"solver": method, "status": "OK", "alpha": alpha_opt}
+    return alpha_opt, obj_val, meta_out
 
 
 
@@ -418,11 +430,64 @@ def branchVariable(alpha, Q, y, Ssupp, Psupp, branch_rule='max_lagrangian_grad')
         ind = Psupp[bb_ind]
     else:
         raise ValueError(f"Invalid branch rule: {branch_rule}")
-    
+
     return ind
 
-def mainBnB(Q, y, beta, method='mosek', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None):
+
+def _slice_alpha_to_child(alpha_parent, w_parent, w_child):
+    """
+    Map parent alpha (length |w_parent|) to child ordering w_child.
+    Returns None if dimensions mismatch or indices are inconsistent.
+    """
+    if alpha_parent is None or w_parent is None:
+        return None
+    w_to_pos = {idx: pos for pos, idx in enumerate(w_parent)}
+    alpha_parent = np.asarray(alpha_parent).reshape(-1)
+    if alpha_parent.shape[0] != len(w_parent):
+        return None
+    alpha_child = np.zeros((len(w_child), 1))
+    for j, idx in enumerate(w_child):
+        pos = w_to_pos.get(idx)
+        if pos is not None:
+            alpha_child[j, 0] = alpha_parent[pos]
+        else:
+            alpha_child[j, 0] = 0.0
+    return alpha_child
+
+
+def _build_meta_for_child(meta_parent, w_child, transmit_payload):
+    """
+    Build meta_in for a child node; returns None if parent meta is missing.
+    transmit_payload: string or None, supports "primal".
+    """
+    if meta_parent is None:
+        return None
+    meta_in = {}
+    w_parent = meta_parent.get("w_child", None)
+    meta_in["w_parent"] = w_parent
+
+    if transmit_payload == "primal":
+        alpha_parent = meta_parent.get("alpha", None)
+        alpha_child = _slice_alpha_to_child(alpha_parent, w_parent, w_child)
+        if alpha_child is not None:
+            meta_in["alpha0"] = alpha_child
+
+    return meta_in
+
+def mainBnB(
+    Q,
+    y,
+    beta,
+    method='mosek',
+    branch_rule='max_lagrangian_grad',
+    traverse_rule='bfs',
+    time_limit=None,
+    transmit_meta_left=None,
+    transmit_meta_right=None,
+):
     relErr = 1e-10
+
+    # When transmit_meta_left/right is None, no warm-start info is sent.
 
     if traverse_rule == 'bfs':
         q = PriorityQueue()
@@ -436,31 +501,30 @@ def mainBnB(Q, y, beta, method='mosek', branch_rule='max_lagrangian_grad', trave
 
     ub = 10e10
     global_ub = ub + 1e-4
-    alpha_init, lb = solveSVM(Q, y, method)
+    alpha_init, lb, meta_init = solveSVM(Q, y, method, meta_in=None)
 
-    global_supp = []
-    Ssupp = []
-    Psupp = list(range(Q.shape[0]))
-    lambda_init = 0 # TODO: lambda_init değişecek 
-    q.put([lb,ub,0,Ssupp,Psupp,alpha_init,lambda_init])
+    n = Q.shape[0]
+    global_supp = np.array([], dtype=np.int32)
+    Ssupp = np.array([], dtype=np.int32)
+    Psupp = np.arange(n, dtype=np.int32)
+    lambda_init = 0  # TODO: lambda_init değişecek
+    if transmit_meta_left or transmit_meta_right:
+        if meta_init is None:
+            meta_init = {}
+        meta_init["w_child"] = list(range(n))
+    else:
+        meta_init = None
+    q.put([lb, ub, 0, Ssupp, Psupp, alpha_init, lambda_init, meta_init])
 
     count = 0
     while q.qsize() >= 1:
-        [lb,ub,_,Ssupp,Psupp,alpha1,lambda_val] = q.get()
+        [lb, ub, _, Ssupp, Psupp, alpha1, lambda_val, meta_parent] = q.get()
         print("count: ", count)
-        #print("lb: ", lb)
-        #print("ub: ", ub)
-        #print("Ssupp: ", Ssupp)
-        #print("Psupp: ", Psupp)
-        #print("x1: ", alpha1)
-        #print("lambda_val: ", lambda_val)
-
         count += 1
         if ub - global_ub < relErr:
             global_ub = ub
             global_supp = Ssupp
             global_alpha = alpha1
-
 
         if global_ub <= lb:
             #print("global_ub <= lb")
@@ -468,64 +532,140 @@ def mainBnB(Q, y, beta, method='mosek', branch_rule='max_lagrangian_grad', trave
         if abs(ub - lb) < relErr:
             print("abs(ub - lb) < relErr")
             continue
-        if len(Psupp) == 0:
+        if Psupp.size == 0:
             continue
+        if Ssupp.size >= 1:
+            ind = branchVariable(alpha1, Q, y, Ssupp, Psupp, branch_rule)
         else:
-            if len(Ssupp) >= 1: # TODO: Paperda burada başka bir şey var.
-                ind = branchVariable(alpha1, Q, y, Ssupp, Psupp, branch_rule)
+            # Select the most negative diagonal element
+            diag = Q.diagonal()
+            bb_ind = np.argmin(diag)
+            bb_ind = 0 # TODO: Q'nun submatrisi olacak burası
+            ind = Psupp[bb_ind]
 
+        left_supp = np.sort(np.append(Ssupp, ind)).astype(np.int32)
+        Psupp = np.delete(Psupp, bb_ind)
+
+        if (Ssupp.size + Psupp.size) >= 1: # Since right_sup = Ssupp + Psupp
+            w = np.concatenate((Ssupp, Psupp)).astype(np.int32)
+            Qw = Q[w][:, w]
+            yw = y[w,0:1]
+
+            meta_in = _build_meta_for_child(meta_parent, w, transmit_meta_right) if transmit_meta_right else None
+            alpha_w_opt, right_lb, meta_right = solveSVM(Qw, yw, method, meta_in=meta_in)
+            right_lb = right_lb + beta * Ssupp.size
+
+            if transmit_meta_right:
+                if meta_right is None:
+                    meta_right = {}
+                meta_right["w_child"] = w
             else:
-                # Select the most negative diagonal element
-                diag = Q.diagonal()
-                bb_ind = np.argmin(diag)
-                bb_ind = 0 # TODO: Q'nun submatrisi olacak burası
-                ind = Psupp[bb_ind]
+                meta_right = None
+            q.put([right_lb, ub, np.random.rand(), Ssupp, Psupp, alpha1, lambda_val, meta_right]) # TODO: x1 değişecek
+        else: # alpha = 0 case
+            alpha_w_opt = None # this line just added for clarity
+            right_lb = 0 # empty set yields trivial solution alpha = 0, also beta * len(Ssupp) = 0
+            q.put([right_lb, ub, np.random.rand(), Ssupp, Psupp, alpha1, lambda_val, meta_parent])
 
-            left_supp = sorted(Ssupp + [ind])
-            #Psupp = sorted(list(np.delete(Psupp,bb_ind)))
-            Psupp.remove(ind)
-            Psupp = sorted(Psupp)
+        if left_supp.size >= 1:
+            w = left_supp
+            Qw = Q[w][:, w]
+            yw = y[w,0:1]
+            meta_in = _build_meta_for_child(meta_parent, w, transmit_meta_left) if transmit_meta_left else None
+            alpha_w_opt, left_ub, meta_left = solveSVM(Qw, yw, method, meta_in=meta_in)
+            left_ub = left_ub + beta * left_supp.size
 
+            if transmit_meta_left:
+                if meta_left is None:
+                    meta_left = {}
+                meta_left["w_child"] = w
+            else:
+                meta_left = None
+            q.put([lb + beta, left_ub, np.random.rand(), left_supp, Psupp, alpha_w_opt, lambda_val, meta_left])
 
-            if len(Ssupp) + len(Psupp) >= 1: # Since right_sup = Ssupp + Psupp
-                w = Ssupp + Psupp
-                Qw = Q[w,:][:,w]
-                yw = y[w,0:1]
-
-                #eigvals = np.linalg.eigvalsh(Q)
-                #min_eigval = np.min(eigvals)
-                #print("min_eigval: ", min_eigval)
-
-                alpha_w_opt, right_lb = solveSVM(Qw, yw, method)
-                right_lb = right_lb + beta * len(Ssupp)
-
-
-                q.put([right_lb,ub,np.random.rand(),Ssupp,Psupp,alpha1,lambda_val]) # TODO: x1 değişecek
-            else: # alpha = 0 case
-                alpha_w_opt = None # this line just added for clarity
-                right_lb = 0 # empty set yields trivial solution alpha = 0, also beta * len(Ssupp) = 0
-                q.put([right_lb,ub,np.random.rand(),Ssupp,Psupp,alpha1,lambda_val])
-
-
-                
-            if len(left_supp) >= 1:
-                w = left_supp
-                #print("w: ", w)
-                Qw = Q[w,:][:,w]
-                #print("Aw: ", Aw)
-                #print("eig: ", np.linalg.eigvalsh(Aw))
-                yw = y[w,0:1]
-                alpha_w_opt, left_ub = solveSVM(Qw, yw, method)
-                left_ub = left_ub + beta * len(left_supp)
-
-                #print("left_supp: ", left_supp)
-
-                q.put([lb+beta,left_ub,np.random.rand(),left_supp,Psupp,alpha_w_opt,lambda_val])
-
-
-    global_supp = sorted(global_supp)
+    global_supp = np.array(sorted(global_supp.tolist()), dtype=np.int32)
     #print("count: ", count)
     return global_alpha, global_ub, global_supp, count
+
+# Old implementation (commented)
+# def mainBnB(Q, y, beta, method='mosek', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None):
+#     relErr = 1e-10
+#
+#     if traverse_rule == 'bfs':
+#         q = PriorityQueue()
+#     elif traverse_rule == 'dfs':
+#         q = LifoQueue()
+#     else:
+#         raise ValueError(f"Invalid traverse rule: {traverse_rule}")
+#
+#     ub = 10e10
+#     global_ub = ub + 1e-4
+#     alpha_init, lb = solveSVM(Q, y, method)
+#
+#     global_supp = []
+#     Ssupp = []
+#     Psupp = list(range(Q.shape[0]))
+#     lambda_init = 0 # TODO: lambda_init değişecek
+#     q.put([lb,ub,0,Ssupp,Psupp,alpha_init,lambda_init])
+#
+#     count = 0
+#     while q.qsize() >= 1:
+#         [lb,ub,_,Ssupp,Psupp,alpha1,lambda_val] = q.get()
+#         print("count: ", count)
+#
+#         count += 1
+#         if ub - global_ub < relErr:
+#             global_ub = ub
+#             global_supp = Ssupp
+#             global_alpha = alpha1
+#
+#         if global_ub <= lb:
+#             break # dfs için breakten continue yapıldı, paperde termination kısmında break var.
+#         if abs(ub - lb) < relErr:
+#             print("abs(ub - lb) < relErr")
+#             continue
+#         if len(Psupp) == 0:
+#             continue
+#         else:
+#             if len(Ssupp) >= 1:
+#                 ind = branchVariable(alpha1, Q, y, Ssupp, Psupp, branch_rule)
+#
+#             else:
+#                 # Select the most negative diagonal element
+#                 diag = Q.diagonal()
+#                 bb_ind = np.argmin(diag)
+#                 bb_ind = 0 # TODO: Q'nun submatrisi olacak burası
+#                 ind = Psupp[bb_ind]
+#
+#             left_supp = sorted(Ssupp + [ind])
+#             Psupp.remove(ind)
+#             Psupp = sorted(Psupp)
+#
+#             if len(Ssupp) + len(Psupp) >= 1: # Since right_sup = Ssupp + Psupp
+#                 w = Ssupp + Psupp
+#                 Qw = Q[w,:][:,w]
+#                 yw = y[w,0:1]
+#
+#                 alpha_w_opt, right_lb = solveSVM(Qw, yw, method)
+#                 right_lb = right_lb + beta * len(Ssupp)
+#
+#                 q.put([right_lb,ub,np.random.rand(),Ssupp,Psupp,alpha1,lambda_val]) # TODO: x1 değişecek
+#             else: # alpha = 0 case
+#                 alpha_w_opt = None # this line just added for clarity
+#                 right_lb = 0 # empty set yields trivial solution alpha = 0, also beta * len(Ssupp) = 0
+#                 q.put([right_lb,ub,np.random.rand(),Ssupp,Psupp,alpha1,lambda_val])
+#
+#             if len(left_supp) >= 1:
+#                 w = left_supp
+#                 Qw = Q[w,:][:,w]
+#                 yw = y[w,0:1]
+#                 alpha_w_opt, left_ub = solveSVM(Qw, yw, method)
+#                 left_ub = left_ub + beta * len(left_supp)
+#
+#                 q.put([lb+beta,left_ub,np.random.rand(),left_supp,Psupp,alpha_w_opt,lambda_val])
+#
+#     global_supp = sorted(global_supp)
+#     return global_alpha, global_ub, global_supp, count
 
 
 def SVMDual_mip(Q, y, beta):
@@ -958,7 +1098,7 @@ if __name__ == "__main__":
     mu = 1e-1 * np.eye(len(w))
     Qw = Qw + mu
 
-    alpha_w_opt, right_lb = solveSVM(Qw, yw, "cvxpy")
+    alpha_w_opt, right_lb, _ = solveSVM(Qw, yw, "cvxpy")
 
     print("right_lb: ", right_lb)
     """
