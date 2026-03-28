@@ -1,4 +1,3 @@
-from asyncio import taskgroups
 import numpy as np
 import pandas as pd
 import cvxpy as cp
@@ -6,8 +5,8 @@ from queue import PriorityQueue, LifoQueue
 import time
 import gurobipy as gp
 from gurobipy import GRB
-import mosek.fusion as mf
-import mosek
+# import mosek.fusion as mf  # Disabled: MOSEK not used
+# import mosek  # Disabled: MOSEK not used
 import math
 
 
@@ -165,7 +164,7 @@ def branchVariable_rmvp1(x, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, br
 
 
 
-def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='mosek', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None):
+def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='auto', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None):
     """
     Branch-and-bound algorithm for CP-RMVP problem:
         min_{x in R^n} x^T D x  s.t.  tau^T x - gamma * ||x||_D >= tau_bar
@@ -205,9 +204,6 @@ def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='mosek', branch_rule='max_
         if global_ub - lb <= relErr:
             print("global_ub <= lb")
             break
-        if abs(ub - lb) < relErr:
-            print("abs(ub - lb) < relErr")
-            continue
         if Psupp.size == 0:
             continue
 
@@ -451,18 +447,14 @@ def RMVP1_mipGUROBI(D, tau, tau_bar, gamma, beta, threads=1):
 
     # Tighter tolerances for higher precision
     model.setParam('OutputFlag', 0)
-    #model.setParam('Threads', threads)
+    model.setParam('Threads', threads)
     model.setParam('IntFeasTol', 1e-8)
     model.setParam('FeasibilityTol', 1e-8)
     model.setParam('OptimalityTol', 1e-8)
     model.setParam('MIPGap', 1e-8)
     model.setParam('MIPGapAbs', 1e-8)
-    # Improve numeric robustness
-    model.setParam('NumericFocus', 3)
-    model.setParam('BarConvTol', 1e-8)
-    model.setParam('BarQCPConvTol', 1e-8)
     # Time limit (seconds) ~ 1 hour
-    model.setParam('TimeLimit', 3600)
+    model.setParam('TimeLimit', 43200)
 
     model.optimize()
     print("MIP GUROBI status: ", model.status)
@@ -479,220 +471,95 @@ def RMVP1_mipGUROBI(D, tau, tau_bar, gamma, beta, threads=1):
         return np.zeros((n, 1)), np.inf, np.inf
 
 
-def RMVP1_mipMOSEK(D, tau, tau_bar, gamma, beta):
-    """
-    Mixed-integer programming formulation for CP-RMVP problem:
-        min_{x in R^n} x^T D x + beta * ||x||_0  s.t.  tau^T x - gamma * ||x||_D >= tau_bar
-    
-    Parameters
-    ----------
-    D : (n, n) array_like
-        Positive semidefinite symmetric matrix D.
-    tau : (n,) array_like
-        The excess mean return vector estimate tau.
-    tau_bar : float
-        Scalar parameter tau_bar.
-    gamma : float
-        Ellipsoidal uncertainty radius γ.
-    beta : float
-        Sparsity penalty parameter.
-    
-    Returns
-    -------
-    x_opt : (n, 1) ndarray
-        Optimal solution.
-    obj_val : float
-        Optimal objective value.
-    """
-    n = D.shape[0]
-    # Big-M value for sparsity constraints
-    M = 1e1  # Large enough bound for x
-    
-    # Convert to numpy arrays
-    D = np.asarray(D, dtype=float)
-    tau = np.asarray(tau, dtype=float)
-    
-    # Create MOSEK model
-    M_model = mf.Model("RMVP1_mipMOSEK")
-    
-    # Decision variables
-    # x: continuous variables (n-dimensional)
-    x = M_model.variable("x", n, mf.Domain.unbounded())
-    # z: binary variables (n-dimensional) for sparsity
-    z = M_model.variable("z", n, mf.Domain.binary())
-    # t: auxiliary variable for ||x||_D = sqrt(x^T D x), t >= 0
-    t = M_model.variable("t", mf.Domain.greaterThan(0.0))
-    # q: auxiliary variable for x^T D x in the objective, q >= 0
-    q = M_model.variable("q", mf.Domain.greaterThan(0.0))
-    
-    # Objective: q + beta * sum(z_i)
-    # We will add constraint q >= x^T D x separately
-    sparsity_term = mf.Expr.mul(beta, mf.Expr.sum(z))
-    quad_obj = mf.Expr.add(q, sparsity_term)
-    M_model.objective(mf.ObjectiveSense.Minimize, quad_obj)
-    
-    # Constraint: q >= x^T D x
-    # Using Cholesky decomposition: D = L L^T, then ||L^T x||^2 <= q
-    # This is modeled as: (q, 0.5, L^T x) in RotatedQCone
-    # RotatedQCone (r, s, x) means: 2*r*s >= ||x||^2
-    # So (q, 0.5, L^T x) means: 2*q*0.5 >= ||L^T x||^2, i.e., q >= ||L^T x||^2 = x^T D x
-    L = np.linalg.cholesky(D)
-    L_T_matrix = mf.Matrix.dense(L.T)
-    Ltx = mf.Expr.mul(L_T_matrix, x)
-    quad_cone_expr = mf.Expr.vstack(q, 0.5, Ltx)
-    M_model.constraint("quad_obj_constraint", 
-                      quad_cone_expr, 
-                      mf.Domain.inRotatedQCone())
-    
-    # Constraint: tau^T x - gamma * t >= tau_bar
-    linear_part = mf.Expr.dot(tau, x)
-    M_model.constraint("robust_constraint", 
-                      mf.Expr.sub(linear_part, mf.Expr.mul(gamma, t)), 
-                      mf.Domain.greaterThan(tau_bar))
-    
-    # Constraint: t >= sqrt(x^T D x), which is equivalent to: x^T D x <= t^2
-    # Using Cholesky decomposition: D = L L^T, then ||L^T x|| <= t
-    # This is modeled as: (t, L^T x) in QuadraticCone
-    # QuadraticCone (r, x) means: r >= ||x||
-    # So (t, L^T x) means: t >= ||L^T x||, which gives t^2 >= ||L^T x||^2 = x^T D x
-    Ltx_norm = mf.Expr.mul(L_T_matrix, x)
-    cone_expr = mf.Expr.vstack(t, Ltx_norm)
-    M_model.constraint("norm_constraint", 
-                      cone_expr, 
-                      mf.Domain.inQCone())
-    
-    # Sparsity constraints: |x_i| <= M * z_i
-    # This is: -M * z_i <= x_i <= M * z_i
-    # We add constraints: x <= M * z and x >= -M * z
-    M_model.constraint("sparsity_upper", 
-                      mf.Expr.sub(x, mf.Expr.mul(M, z)), 
-                      mf.Domain.lessThan(0.0))
-    M_model.constraint("sparsity_lower", 
-                      mf.Expr.add(x, mf.Expr.mul(M, z)), 
-                      mf.Domain.greaterThan(0.0))
-    
-    # Set solver parameters for higher precision
-    # Interior point tolerances
-    M_model.setSolverParam("intpntCoTolRelGap", 1e-8)
-    M_model.setSolverParam("intpntCoTolPfeas", 1e-8)
-    M_model.setSolverParam("intpntCoTolDfeas", 1e-8)
-    M_model.setSolverParam("intpntCoTolMuRed", 1e-8)
-    M_model.setSolverParam("intpntCoTolInfeas", 1e-8)
-    
-    # Mixed-integer solver tolerances
-    M_model.setSolverParam("mioTolRelGap", 1e-8)
-    M_model.setSolverParam("mioTolAbsGap", 1e-8)
-    M_model.setSolverParam("mioMaxTime", -1)  # No time limit
-
-    # Solve
-    M_model.solve()
-    
-    # Extract solution
-    solsta = M_model.getPrimalSolutionStatus()
-    if solsta == mf.SolutionStatus.Optimal:
-        x_opt = np.array(M_model.getVariable('x').level()).reshape(-1, 1)
-        obj_val = M_model.primalObjValue()
-        M_model.dispose()
-        return x_opt, obj_val
-    else:
-        M_model.dispose()
-        return np.zeros((n, 1)), np.inf
+# def RMVP1_mipMOSEK(D, tau, tau_bar, gamma, beta):
+#     """Disabled: MOSEK solver is not used."""
+#     raise NotImplementedError("MOSEK solver disabled; use CVXPY/GUROBI alternatives.")
 
 
-def RMVP1_mipCVXPY(D, tau, tau_bar, gamma, beta):
-    """
-    Mixed-integer programming formulation for CP-RMVP problem using CVXPY:
-        min_{x in R^n} x^T D x + beta * ||x||_0  s.t.  tau^T x - gamma * ||x||_D >= tau_bar
-    
-    Parameters
-    ----------
-    D : (n, n) array_like
-        Positive semidefinite symmetric matrix D.
-    tau : (n,) array_like
-        The excess mean return vector estimate tau.
-    tau_bar : float
-        Scalar parameter tau_bar.
-    gamma : float
-        Ellipsoidal uncertainty radius γ.
-    beta : float
-        Sparsity penalty parameter.
-    
-    Returns
-    -------
-    x_opt : (n, 1) ndarray
-        Optimal solution.
-    obj_val : float
-        Optimal objective value.
-    """
-    n = D.shape[0]
-    # Big-M value for sparsity constraints
-    M = 1e1  # Large enough bound for x
-    
-    # Convert to numpy arrays
-    D = np.asarray(D, dtype=float)
-    tau = np.asarray(tau, dtype=float)
-
-    
-    # Decision variables
-    x = cp.Variable(n, name="x")
-    z = cp.Variable(n, boolean=True, name="z")
-    t = cp.Variable(nonneg=True, name="t")
-    
-    # Objective: x^T D x + beta * sum(z_i)
-    quad_term = cp.quad_form(x, D)
-    sparsity_term = beta * cp.sum(z)
-    objective = cp.Minimize(quad_term + sparsity_term)
-    
-    # Constraint: tau^T x - gamma * t >= tau_bar
-    robust_constraint = tau.T @ x - gamma * t >= tau_bar
-    
-    # Constraint: t >= sqrt(x^T D x), which is equivalent to: x^T D x <= t^2
-    # Using Cholesky decomposition: D = L L^T, then ||L^T x|| <= t
-    # This is a second-order cone constraint: (t, L^T x) in SOC
-    L = np.linalg.cholesky(D)
-    L_T = L.T
-    norm_constraint = cp.SOC(t, L_T @ x)
-    
-    # Sparsity constraints: |x_i| <= M * z_i
-    # This is: -M * z_i <= x_i <= M * z_i
-    sparsity_upper = x <= M * z
-    sparsity_lower = x >= -M * z
-    
-    # Formulate problem
-    constraints = [robust_constraint, sparsity_upper, sparsity_lower]
-
-    u = cp.Variable(nonneg=True)   # represents t^2
-
-    constraints += [
-        cp.quad_form(x, cp.psd_wrap(D)) <= u,          # x^T D x <= u   (DCP)
-        cp.SOC(u + 0.5, cp.hstack([u - 0.5, t]))       # enforces t^2 <= u (rotated cone)
-    ]
-
-
-    problem = cp.Problem(objective, constraints)
-    
-    # Solve with MOSEK
-    # Set solver parameters for higher precision
-    mosek_params = {
-        "MSK_DPAR_INTPNT_CO_TOL_REL_GAP": 1e-8,
-        "MSK_DPAR_INTPNT_CO_TOL_PFEAS": 1e-8,
-        "MSK_DPAR_INTPNT_CO_TOL_DFEAS": 1e-8,
-        "MSK_DPAR_INTPNT_CO_TOL_MU_RED": 1e-8,
-        "MSK_DPAR_INTPNT_CO_TOL_INFEAS": 1e-8,
-        "MSK_DPAR_MIO_TOL_REL_GAP": 1e-8,
-        "MSK_DPAR_MIO_TOL_ABS_GAP": 1e-8,
-    }
-    problem.solve(solver=cp.MOSEK, verbose=False, mosek_params=mosek_params)
-    
-    # Extract solution
-    if problem.status == cp.OPTIMAL:
-        x_opt = x.value.reshape(-1, 1)
-        # Post-process: set near-zero entries to exactly zero
-        #x_opt[np.abs(x_opt) < 1e-8] = 0.0
-        obj_val = problem.value
-        return x_opt, obj_val
-    else:
-        return np.zeros((n, 1)), np.inf
+# def RMVP1_mipCVXPY(D, tau, tau_bar, gamma, beta):
+#     """
+#     Mixed-integer programming formulation for CP-RMVP problem using CVXPY:
+#         min_{x in R^n} x^T D x + beta * ||x||_0  s.t.  tau^T x - gamma * ||x||_D >= tau_bar
+#     
+#     Parameters
+#     ----------
+#     D : (n, n) array_like
+#         Positive semidefinite symmetric matrix D.
+#     tau : (n,) array_like
+#         The excess mean return vector estimate tau.
+#     tau_bar : float
+#         Scalar parameter tau_bar.
+#     gamma : float
+#         Ellipsoidal uncertainty radius γ.
+#     beta : float
+#         Sparsity penalty parameter.
+#     
+#     Returns
+#     -------
+#     x_opt : (n, 1) ndarray
+#         Optimal solution.
+#     obj_val : float
+#         Optimal objective value.
+#     """
+#     n = D.shape[0]
+#     # Big-M value for sparsity constraints
+#     M = 1e1  # Large enough bound for x
+#     
+#     # Convert to numpy arrays
+#     D = np.asarray(D, dtype=float)
+#     tau = np.asarray(tau, dtype=float)
+#
+#     
+#     # Decision variables
+#     x = cp.Variable(n, name="x")
+#     z = cp.Variable(n, boolean=True, name="z")
+#     t = cp.Variable(nonneg=True, name="t")
+#     
+#     # Objective: x^T D x + beta * sum(z_i)
+#     quad_term = cp.quad_form(x, D)
+#     sparsity_term = beta * cp.sum(z)
+#     objective = cp.Minimize(quad_term + sparsity_term)
+#     
+#     # Constraint: tau^T x - gamma * t >= tau_bar
+#     robust_constraint = tau.T @ x - gamma * t >= tau_bar
+#     
+#     # Constraint: t >= sqrt(x^T D x), which is equivalent to: x^T D x <= t^2
+#     # Using Cholesky decomposition: D = L L^T, then ||L^T x|| <= t
+#     # This is a second-order cone constraint: (t, L^T x) in SOC
+#     L = np.linalg.cholesky(D)
+#     L_T = L.T
+#     norm_constraint = cp.SOC(t, L_T @ x)
+#     
+#     # Sparsity constraints: |x_i| <= M * z_i
+#     # This is: -M * z_i <= x_i <= M * z_i
+#     sparsity_upper = x <= M * z
+#     sparsity_lower = x >= -M * z
+#     
+#     # Formulate problem
+#     constraints = [robust_constraint, sparsity_upper, sparsity_lower]
+#
+#     u = cp.Variable(nonneg=True)   # represents t^2
+#
+#     constraints += [
+#         cp.quad_form(x, cp.psd_wrap(D)) <= u,          # x^T D x <= u   (DCP)
+#         cp.SOC(u + 0.5, cp.hstack([u - 0.5, t]))       # enforces t^2 <= u (rotated cone)
+#     ]
+#
+#
+#     problem = cp.Problem(objective, constraints)
+#     
+#     # Solve with default available solver
+#     problem.solve(verbose=False)
+#     
+#     # Extract solution
+#     if problem.status == cp.OPTIMAL:
+#         x_opt = x.value.reshape(-1, 1)
+#         # Post-process: set near-zero entries to exactly zero
+#         #x_opt[np.abs(x_opt) < 1e-8] = 0.0
+#         obj_val = problem.value
+#         return x_opt, obj_val
+#     else:
+#         return np.zeros((n, 1)), np.inf
 
     
     
@@ -843,7 +710,7 @@ def branchVariable_rmvp2(x, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, br
     return ind, bb_ind
 
 
-def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='mosek', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None):
+def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='auto', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None):
     """
     Branch-and-bound algorithm for CP-RMVP2 problem (same structure as mainRMVP1BnB).
     """
@@ -879,12 +746,9 @@ def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='mosek', branch_rule='m
             global_supp = Ssupp
             global_x = x1
 
-        if global_ub <= lb:
+        if global_ub - lb <= relErr:
             print("global_ub <= lb")
             break
-        if abs(ub - lb) < relErr:
-            print("abs(ub - lb) < relErr")
-            continue
         if Psupp.size == 0:
             continue
 
@@ -1052,7 +916,7 @@ def RMVP2_mipGUROBI(D, tau, tau_bar, gamma, beta, t, threads=1):
     """
     n = D.shape[0]
     # Big-M value for sparsity constraints
-    M = 1e5  # Large enough bound for x
+    M = 1e2
     
     model = gp.Model("RMVP2_mipGUROBI")
     
@@ -1086,11 +950,16 @@ def RMVP2_mipGUROBI(D, tau, tau_bar, gamma, beta, t, threads=1):
     model.addConstrs(x[i] <= M * z[i] for i in range(n))
     model.addConstrs(x[i] >= -M * z[i] for i in range(n))
     
+    # Tighter tolerances for higher precision
     model.setParam('OutputFlag', 0)
-    #model.setParam('Threads', threads)
+    model.setParam('Threads', threads)
     model.setParam('IntFeasTol', 1e-8)
+    model.setParam('FeasibilityTol', 1e-8)
+    model.setParam('OptimalityTol', 1e-8)
+    model.setParam('MIPGap', 1e-8)
+    model.setParam('MIPGapAbs', 1e-8)
     # Time limit (seconds) ~ 1 hour
-    model.setParam('TimeLimit', 3600)
+    model.setParam('TimeLimit', 43200)
     
     model.optimize()
     
@@ -1106,87 +975,87 @@ def RMVP2_mipGUROBI(D, tau, tau_bar, gamma, beta, t, threads=1):
     else:
         return np.zeros((n, 1)), np.inf, np.inf  # Use +inf for minimization failure
     
-def RMVP2_mipCVXPY(D, tau, tau_bar, gamma, beta, t):
-    """
-    Mixed-integer programming formulation for CP-RMVP2 problem using CVXPY:
-        min_{x in R^N} -tau^T x + tau_bar + gamma * ||x||_D + beta * ||x||_0  s.t. ||x||_D <= t
-    
-    Parameters
-    ----------
-    D : (n, n) array_like
-        Positive semidefinite symmetric matrix D.
-    tau : (n,) array_like
-        The excess mean return vector estimate tau.
-    tau_bar : float
-        Scalar parameter tau_bar.
-    gamma : float
-        Ellipsoidal uncertainty radius γ.
-    beta : float
-        Sparsity penalty parameter.
-    t : float
-        D-norm constraint bound.
-    
-    Returns
-    -------
-    x_opt : (n, 1) ndarray
-        Optimal solution.
-    obj_val : float
-        Optimal objective value.
-    """
-    n = D.shape[0]
-    # Big-M value for sparsity constraints
-    M = 1e5  # Large enough bound for x
-    
-    # Convert to numpy arrays
-    D = np.asarray(D, dtype=float)
-    tau = np.asarray(tau, dtype=float)
-    
-    # Decision variables
-    x = cp.Variable(n, name="x")
-    z = cp.Variable(n, boolean=True, name="z")
-    s = cp.Variable(nonneg=True, name="s")  # Auxiliary variable for ||x||_D
-    
-    # Objective: min -tau^T x + tau_bar + gamma * ||x||_D + beta * sum(z_i)
-    # Note: beta * ||x||_0 is a reward in maximization, so we add it
-    linear_part = tau.T @ x
-    sparsity_term = beta * cp.sum(z)
-    objective = cp.Minimize(-linear_part + tau_bar + gamma * s + sparsity_term)
-    
-    # Constraint: ||x||_D <= t, which is equivalent to: x^T D x <= t^2
-    # Using Cholesky decomposition: D = L L^T, then ||L^T x|| <= t
-    # This is a second-order cone constraint: (t, L^T x) in SOC
-    L = np.linalg.cholesky(D)
-    L_T = L.T
-    norm_constraint = cp.SOC(t, L_T @ x)
-    
-    # Also need s >= ||x||_D for the objective
-    # Constraint: s >= ||x||_D, which is: ||L^T x|| <= s
-    s_norm_constraint = cp.SOC(s, L_T @ x)
-    
-    # Sparsity constraints: |x_i| <= M * z_i
-    # This is: -M * z_i <= x_i <= M * z_i
-    sparsity_upper = x <= M * z
-    sparsity_lower = x >= -M * z
-    
-    # Formulate problem
-    constraints = [norm_constraint, s_norm_constraint, sparsity_upper, sparsity_lower]
-    problem = cp.Problem(objective, constraints)
-    
-    # Solve with MOSEK
-    problem.solve(solver=cp.MOSEK, verbose=False)
-    
-    # Extract solution
-    if problem.status == cp.OPTIMAL:
-        x_opt = x.value.reshape(-1, 1)
-        # Post-process: set near-zero entries to exactly zero
-        x_opt[np.abs(x_opt) < 1e-8] = 0.0
-
-        obj_val = problem.value
-
-        
-        return x_opt, obj_val
-    else:
-        return np.zeros((n, 1)), np.inf  # Use +inf for minimization failure
+# def RMVP2_mipCVXPY(D, tau, tau_bar, gamma, beta, t):
+#     """
+#     Mixed-integer programming formulation for CP-RMVP2 problem using CVXPY:
+#         min_{x in R^N} -tau^T x + tau_bar + gamma * ||x||_D + beta * ||x||_0  s.t. ||x||_D <= t
+#     
+#     Parameters
+#     ----------
+#     D : (n, n) array_like
+#         Positive semidefinite symmetric matrix D.
+#     tau : (n,) array_like
+#         The excess mean return vector estimate tau.
+#     tau_bar : float
+#         Scalar parameter tau_bar.
+#     gamma : float
+#         Ellipsoidal uncertainty radius γ.
+#     beta : float
+#         Sparsity penalty parameter.
+#     t : float
+#         D-norm constraint bound.
+#     
+#     Returns
+#     -------
+#     x_opt : (n, 1) ndarray
+#         Optimal solution.
+#     obj_val : float
+#         Optimal objective value.
+#     """
+#     n = D.shape[0]
+#     # Big-M value for sparsity constraints
+#     M = 1e5  # Large enough bound for x
+#     
+#     # Convert to numpy arrays
+#     D = np.asarray(D, dtype=float)
+#     tau = np.asarray(tau, dtype=float)
+#     
+#     # Decision variables
+#     x = cp.Variable(n, name="x")
+#     z = cp.Variable(n, boolean=True, name="z")
+#     s = cp.Variable(nonneg=True, name="s")  # Auxiliary variable for ||x||_D
+#     
+#     # Objective: min -tau^T x + tau_bar + gamma * ||x||_D + beta * sum(z_i)
+#     # Note: beta * ||x||_0 is a reward in maximization, so we add it
+#     linear_part = tau.T @ x
+#     sparsity_term = beta * cp.sum(z)
+#     objective = cp.Minimize(-linear_part + tau_bar + gamma * s + sparsity_term)
+#     
+#     # Constraint: ||x||_D <= t, which is equivalent to: x^T D x <= t^2
+#     # Using Cholesky decomposition: D = L L^T, then ||L^T x|| <= t
+#     # This is a second-order cone constraint: (t, L^T x) in SOC
+#     L = np.linalg.cholesky(D)
+#     L_T = L.T
+#     norm_constraint = cp.SOC(t, L_T @ x)
+#     
+#     # Also need s >= ||x||_D for the objective
+#     # Constraint: s >= ||x||_D, which is: ||L^T x|| <= s
+#     s_norm_constraint = cp.SOC(s, L_T @ x)
+#     
+#     # Sparsity constraints: |x_i| <= M * z_i
+#     # This is: -M * z_i <= x_i <= M * z_i
+#     sparsity_upper = x <= M * z
+#     sparsity_lower = x >= -M * z
+#     
+#     # Formulate problem
+#     constraints = [norm_constraint, s_norm_constraint, sparsity_upper, sparsity_lower]
+#     problem = cp.Problem(objective, constraints)
+#     
+#     # Solve with default available solver
+#     problem.solve(verbose=False)
+#     
+#     # Extract solution
+#     if problem.status == cp.OPTIMAL:
+#         x_opt = x.value.reshape(-1, 1)
+#         # Post-process: set near-zero entries to exactly zero
+#         x_opt[np.abs(x_opt) < 1e-8] = 0.0
+#
+#         obj_val = problem.value
+#
+#         
+#         return x_opt, obj_val
+#     else:
+#         return np.zeros((n, 1)), np.inf  # Use +inf for minimization failure
     
 
 
@@ -1357,33 +1226,33 @@ def test_rmvp1_solvers(n=10, seed=42, verbose=True):
     
     results = {'instance': instance}
     
-    # Run MIP solver
-    print("\n" + "-" * 80)
-    print("Running RMVP1_mip (Mixed-Integer Programming solver)...")
-    print("-" * 80)
-    start_time = time.time()
-    x_mip, obj_mip = RMVP1_mipCVXPY(D, tau, tau_bar, gamma, beta)
-    obj_mip = (x_mip.T @ D @ x_mip + beta * np.sum(np.abs(x_mip) > 1e-8))[0][0]
-    
-    mip_time = time.time() - start_time
-    const = tau.T @ x_mip - gamma * np.sqrt(x_mip.T @ D @ x_mip)
-    print("const: ", const)
-    
-    if verbose:
-        print(f"MIP Solver Results:")
-        print(f"  - Status: {'Optimal' if obj_mip < np.inf else 'Infeasible/Error'}")
-        print(f"  - Objective value: {obj_mip:.6f}")
-        print(f"  - Solve time: {mip_time:.4f} seconds")
-        print(f"  - Solution x:")
-        print(f"    {x_mip.flatten()}")
-        print(f"  - Non-zero components: {np.sum(np.abs(x_mip) > 1e-8)}")
-        print(f"  - Support: {np.where(np.abs(x_mip.flatten()) > 1e-8)[0].tolist()}")
-    
-    results['mip_solution'] = {
-        'x': x_mip,
-        'obj_val': obj_mip,
-        'time': mip_time
-    }
+    # Run MIP solver (CVXPY disabled)
+    # print("\n" + "-" * 80)
+    # print("Running RMVP1_mip (Mixed-Integer Programming solver)...")
+    # print("-" * 80)
+    # start_time = time.time()
+    # x_mip, obj_mip = RMVP1_mipCVXPY(D, tau, tau_bar, gamma, beta)
+    # obj_mip = (x_mip.T @ D @ x_mip + beta * np.sum(np.abs(x_mip) > 1e-8))[0][0]
+    #
+    # mip_time = time.time() - start_time
+    # const = tau.T @ x_mip - gamma * np.sqrt(x_mip.T @ D @ x_mip)
+    # print("const: ", const)
+    #
+    # if verbose:
+    #     print(f"MIP Solver Results:")
+    #     print(f"  - Status: {'Optimal' if obj_mip < np.inf else 'Infeasible/Error'}")
+    #     print(f"  - Objective value: {obj_mip:.6f}")
+    #     print(f"  - Solve time: {mip_time:.4f} seconds")
+    #     print(f"  - Solution x:")
+    #     print(f"    {x_mip.flatten()}")
+    #     print(f"  - Non-zero components: {np.sum(np.abs(x_mip) > 1e-8)}")
+    #     print(f"  - Support: {np.where(np.abs(x_mip.flatten()) > 1e-8)[0].tolist()}")
+    #
+    # results['mip_solution'] = {
+    #     'x': x_mip,
+    #     'obj_val': obj_mip,
+    #     'time': mip_time
+    # }
     
     # Run Branch-and-Bound solver
     print("\n" + "-" * 80)
@@ -1691,37 +1560,37 @@ def test_rmvp2_solvers(n=10, seed=42, verbose=True):
         'time': gurobi_time
     }
 
-    # Run CVXPY MIP solver
-    print("\n" + "-" * 80)
-    print("Running RMVP2_mipCVXPY...")
-    print("-" * 80)
-    start_time = time.time()
-    x_cvxpy, obj_cvxpy = RMVP2_mipCVXPY(D, tau, tau_bar, gamma, beta, t)
-    
-    # Recompute objective
-    if obj_cvxpy > -np.inf:
-
-        norm_D_cvxpy = np.sqrt(x_cvxpy.T @ D @ x_cvxpy)[0,0]
-        l0_cvxpy = np.sum(np.abs(x_cvxpy) > 1e-8)
-        obj_cvxpy_recalc = -(tau.T @ x_cvxpy)[0] + tau_bar + gamma * norm_D_cvxpy + beta * l0_cvxpy
-    else:
-        obj_cvxpy_recalc = -np.inf
-        norm_D_cvxpy = 0
-        
-    cvxpy_time = time.time() - start_time
-    
-    if verbose:
-        print(f"CVXPY MIP Solver Results:")
-        print(f"  - Objective value: {obj_cvxpy_recalc:.6f}")
-        print(f"  - Solve time: {cvxpy_time:.4f} seconds")
-        print(f"  - Solution x norm_D: {norm_D_cvxpy:.6f} (<= {t:.6f})")
-        print(f"  - Non-zero components: {np.sum(np.abs(x_cvxpy) > 1e-8)}")
-        #print("x_cvxpy: ", x_cvxpy)
-    results['mip_cvxpy'] = {
-        'x': x_cvxpy,
-        'obj_val': obj_cvxpy_recalc,
-        'time': cvxpy_time
-    }
+    # Run CVXPY MIP solver (CVXPY disabled)
+    # print("\n" + "-" * 80)
+    # print("Running RMVP2_mipCVXPY...")
+    # print("-" * 80)
+    # start_time = time.time()
+    # x_cvxpy, obj_cvxpy = RMVP2_mipCVXPY(D, tau, tau_bar, gamma, beta, t)
+    #
+    # # Recompute objective
+    # if obj_cvxpy > -np.inf:
+    #
+    #     norm_D_cvxpy = np.sqrt(x_cvxpy.T @ D @ x_cvxpy)[0,0]
+    #     l0_cvxpy = np.sum(np.abs(x_cvxpy) > 1e-8)
+    #     obj_cvxpy_recalc = -(tau.T @ x_cvxpy)[0] + tau_bar + gamma * norm_D_cvxpy + beta * l0_cvxpy
+    # else:
+    #     obj_cvxpy_recalc = -np.inf
+    #     norm_D_cvxpy = 0
+    #
+    # cvxpy_time = time.time() - start_time
+    #
+    # if verbose:
+    #     print(f"CVXPY MIP Solver Results:")
+    #     print(f"  - Objective value: {obj_cvxpy_recalc:.6f}")
+    #     print(f"  - Solve time: {cvxpy_time:.4f} seconds")
+    #     print(f"  - Solution x norm_D: {norm_D_cvxpy:.6f} (<= {t:.6f})")
+    #     print(f"  - Non-zero components: {np.sum(np.abs(x_cvxpy) > 1e-8)}")
+    #     #print("x_cvxpy: ", x_cvxpy)
+    # results['mip_cvxpy'] = {
+    #     'x': x_cvxpy,
+    #     'obj_val': obj_cvxpy_recalc,
+    #     'time': cvxpy_time
+    # }
     
     # Run Branch-and-Bound solver
     print("\n" + "-" * 80)
@@ -1806,9 +1675,9 @@ def check_proposition_rmvp1(n=30, seed=42):
     
     print(f"Parameters: n={n}, beta={beta:.6f}, gamma={gamma:.6f}, tau_bar={tau_bar:.6f}")
     
-    # Solve using CVXPY
-    print("Solving problem with RMVP1_mipCVXPY...")
-    #x_opt, obj_val = RMVP1_mipCVXPY(D, tau, tau_bar, gamma, beta)
+    # Solve using CVXPY (disabled)
+    # print("Solving problem with RMVP1_mipCVXPY...")
+    # x_opt, obj_val = RMVP1_mipCVXPY(D, tau, tau_bar, gamma, beta)
     x_opt, obj_val, supp_bnb, count_bnb = mainRMVP1BnB(D, tau, tau_bar, gamma, beta)
     x_opt = zeropadding(x_opt, supp_bnb, n)
 
@@ -1978,12 +1847,12 @@ if __name__ == "__main__":
     print("obj_mip GUROBI: ", obj_mip)
     print("x_mip GUROBI: ", x_mip)
 
-    x_mip, obj_mip = RMVP2_mipCVXPY(D, tau, tau_bar, gamma, beta, t)
-    obj_mip = (-tau.T @ x_mip + tau_bar + gamma * np.sqrt(x_mip.T @ D @ x_mip) + beta * np.sum(np.abs(x_mip) > 1e-6))[0][0]
-    const = x_mip.T @ D @ x_mip
-    print("const CVXPY: ", const)
-    print("obj_mip CVXPY: ", obj_mip)
-    print("x_mip CVXPY: ", x_mip)
+    # x_mip, obj_mip = RMVP2_mipCVXPY(D, tau, tau_bar, gamma, beta, t)
+    # obj_mip = (-tau.T @ x_mip + tau_bar + gamma * np.sqrt(x_mip.T @ D @ x_mip) + beta * np.sum(np.abs(x_mip) > 1e-6))[0][0]
+    # const = x_mip.T @ D @ x_mip
+    # print("const CVXPY: ", const)
+    # print("obj_mip CVXPY: ", obj_mip)
+    # print("x_mip CVXPY: ", x_mip)
 
 
     

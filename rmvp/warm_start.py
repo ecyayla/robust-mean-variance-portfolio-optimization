@@ -3,13 +3,14 @@ from math import ceil
 from main import solveRMVP1, solveRMVP2
 
 
-def warm_start_rmvp1(D, tau, tau_bar, gamma, beta, drop_fraction=0.1):
+def warm_start_rmvp1(D, tau, tau_bar, gamma, beta, drop_fraction=0.1, drop_farthest=True):
     """
     Warm-start strategy for RMVP1 based on Theorem 3 values:
       1) Solve the unrestricted closed-form RMVP1 to get x_hat.
       2) Compute Theorem 3 values (eta, rho_i, bound1, bound2, lower_bound).
-      3) Score each asset by deficit = max(0, lower_bound - |x_hat[i]|).
-      4) Drop the top drop_fraction assets with the largest deficits.
+      3) Score each asset by deficit = lower_bound - |x_hat[i]|.
+      4) Drop the top drop_fraction assets by deficit (farthest by default,
+         closest if drop_farthest=False).
 
     Assumptions: |tau_i| > gamma * sqrt(D_ii) for all assets.
     """
@@ -50,12 +51,16 @@ def warm_start_rmvp1(D, tau, tau_bar, gamma, beta, drop_fraction=0.1):
         bound1 = bound1_scale / rho_i
         lower_bound = min(bound1, bound2)
 
-        deficits[i] = max(0.0, lower_bound - abs(x_hat[i]))
+        deficits[i] = lower_bound - abs(x_hat[i])
 
     # Step 3: drop top-k by deficit
-    k = ceil(drop_fraction * n)
+    # drop_fraction=0 keeps only assumption filtering (no extra drops)
+    k = 0 if drop_fraction == 0 else ceil(drop_fraction * n)
     if k > 0:
-        topk = np.argpartition(deficits, -k)[-k:]
+        if drop_farthest:
+            topk = np.argpartition(deficits, -k)[-k:]
+        else:
+            topk = np.argpartition(deficits, k)[:k]
         dropped = topk.tolist()
     else:
         dropped = []
@@ -75,14 +80,15 @@ def warm_start_rmvp1(D, tau, tau_bar, gamma, beta, drop_fraction=0.1):
     }
 
 
-def warm_start_rmvp2(D, tau, tau_bar, gamma, beta, t, drop_fraction=0.1):
+def warm_start_rmvp2(D, tau, tau_bar, gamma, beta, t, drop_fraction=0.1, drop_farthest=True):
     """
     Warm-start strategy for RMVP2 based on Proposition 4:
       1) Solve the unrestricted closed-form RMVP2 to get x_hat.
       2) Compute H = sqrt(tau^T D^{-1} tau).
-      3) Score each asset by deficit = max(0, lower_bound - |x_hat[i]|),
+      3) Score each asset by deficit = lower_bound - |x_hat[i]|,
          where lower_bound = min(beta / (|tau_i| + H * sqrt(D_ii)), t / sqrt(D_ii)).
-      4) Drop the top drop_fraction assets with the largest deficits.
+      4) Drop the top drop_fraction assets by deficit (farthest by default,
+         closest if drop_farthest=False).
     """
     D = np.asarray(D)
     tau = np.asarray(tau).reshape(-1)
@@ -104,11 +110,15 @@ def warm_start_rmvp2(D, tau, tau_bar, gamma, beta, t, drop_fraction=0.1):
     bound_b = t / diag_sqrt_safe
     lower_bound = np.minimum(bound_a, bound_b)
 
-    deficits = np.maximum(0.0, lower_bound - np.abs(x_hat))
+    deficits = lower_bound - np.abs(x_hat)
 
-    k = ceil(drop_fraction * n)
+    # drop_fraction=0 keeps only assumption filtering (no extra drops)
+    k = 0 if drop_fraction == 0 else ceil(drop_fraction * n)
     if k > 0:
-        topk = np.argpartition(deficits, -k)[-k:]
+        if drop_farthest:
+            topk = np.argpartition(deficits, -k)[-k:]
+        else:
+            topk = np.argpartition(deficits, k)[:k]
         dropped = topk.tolist()
     else:
         dropped = []

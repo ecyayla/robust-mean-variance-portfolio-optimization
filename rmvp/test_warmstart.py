@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import time
+import os
 from datetime import datetime
 from itertools import product
 
@@ -88,7 +89,7 @@ def run_warm_start_rmvp1_compare(drop_fractions=None, run_gurobi: bool = False):
     print(f"Results will be saved to: {output_file}")
 
     for file_path in data_files:
-        ds_key = file_path.split("\\")[-1]
+        ds_key = os.path.basename(file_path)
         ds_cfg = dataset_params.get(ds_key)
         if ds_cfg is None or not ds_cfg.get("enabled", True):
             continue
@@ -122,9 +123,14 @@ def run_warm_start_rmvp1_compare(drop_fractions=None, run_gurobi: bool = False):
                 gamma = problem_data["gamma"]
                 beta_scaled = problem_data["beta"]
                 n = problem_data["n"]
+                n_full = n
+                n_filtered = n
 
                 diag_sqrt = np.sqrt(np.diag(D))
                 num_removed = int(np.sum(np.abs(tau) <= gamma * diag_sqrt))
+                dropped_gamma = num_removed
+                dropped_t = 0
+                num_removed_total = dropped_gamma + dropped_t
                 if num_removed >= n - 1:
                     print("    Skipping solver: too many assets violate assumptions.")
                     continue
@@ -156,15 +162,27 @@ def run_warm_start_rmvp1_compare(drop_fractions=None, run_gurobi: bool = False):
                         D_red, tau_red, tau_bar, gamma, beta_scaled
                     )
 
+                    if run_gurobi:
+                        if obj_gurobi == 0:
+                            diff_pct = np.nan
+                        else:
+                            diff_pct = 100.0 * (obj_bnb - obj_gurobi) / obj_gurobi
+                    else:
+                        diff_pct = "no gurobi"
+
                     result_row = {
                         "Dataset": file_path,
-                        "n": n,
+                        "n": n_full,
+                        "n_filtered": n_filtered,
                         "gamma": gamma,
                         "r_c": r_c,
                         "beta": beta,
                         "beta_scaled": beta_scaled,
                         "tr_factor": tr_factor,
-                        "assumption_dropped_assets": num_removed,
+                        "t": None,
+                        "dropped_assets": num_removed_total,
+                        "dropped_gamma": dropped_gamma,
+                        "dropped_t": dropped_t,
                         "drop_fraction": drop_fraction,
                         "n_warm_start": n_warm_start,
                         "warm_start_dropped_assets": warm_dropped,
@@ -178,6 +196,7 @@ def run_warm_start_rmvp1_compare(drop_fractions=None, run_gurobi: bool = False):
                         "time_cpu_MIP_GUROBI": time_gurobi_cpu,
                         "gap_MIP_GUROBI": gap_gurobi,
                         "diff_BnB_vs_GUROBI": (obj_bnb - obj_gurobi) if run_gurobi else "no gurobi",
+                        "diff_pct_BnB_vs_GUROBI": diff_pct,
                     }
                     results.append(result_row)
 
@@ -214,7 +233,7 @@ def run_warm_start_rmvp2_compare(drop_fractions=None, run_gurobi: bool = False):
     print(f"Results will be saved to: {output_file}")
 
     for file_path in data_files:
-        ds_key = file_path.split("\\")[-1]
+        ds_key = os.path.basename(file_path)
         ds_cfg = dataset_params.get(ds_key)
         if ds_cfg is None or not ds_cfg.get("enabled", True):
             continue
@@ -288,6 +307,14 @@ def run_warm_start_rmvp2_compare(drop_fractions=None, run_gurobi: bool = False):
                         D_red, tau_red, tau_bar, gamma, beta_scaled, t
                     )
 
+                    if run_gurobi:
+                        if obj_gurobi == 0:
+                            diff_pct = np.nan
+                        else:
+                            diff_pct = 100.0 * (obj_bnb - obj_gurobi) / obj_gurobi
+                    else:
+                        diff_pct = "no gurobi"
+
                     result_row = {
                         "Dataset": file_path,
                         "n": n_full,
@@ -314,6 +341,7 @@ def run_warm_start_rmvp2_compare(drop_fractions=None, run_gurobi: bool = False):
                         "time_cpu_MIP_GUROBI": time_gurobi_cpu,
                         "gap_MIP_GUROBI": gap_gurobi,
                         "diff_BnB_vs_GUROBI": (obj_bnb - obj_gurobi) if run_gurobi else "no gurobi",
+                        "diff_pct_BnB_vs_GUROBI": diff_pct,
                     }
                     results.append(result_row)
 
@@ -330,4 +358,8 @@ def run_warm_start_rmvp2_compare(drop_fractions=None, run_gurobi: bool = False):
 
 
 if __name__ == "__main__":
-    run_warm_start_rmvp2_compare(drop_fractions=[0.8, 0.9])
+    #print("Running RMVP1 warm-start comparison...")
+    #run_warm_start_rmvp1_compare(drop_fractions=[0.5, 0.4], run_gurobi=True),
+
+    print("Running RMVP2 warm-start comparison...")
+    run_warm_start_rmvp2_compare(drop_fractions=[0.6, 0.5], run_gurobi=True)

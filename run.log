@@ -1,2 +1,906 @@
-Results will be saved to: rmvp2_warm_start_compare_2026-02-23_21-18.xlsx
-Processing RMVP2 C:\Users\Emre Can\Documents\cursor_remote\robust-mean-variance-portfolio-optimization\rmvp\datasets\SP500_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Running RMVP1 warm-start comparison...
+Results will be saved to: rmvp1_warm_start_compare_2026-03-14_17-48.xlsx
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05
+Set parameter TokenServer to value "139.179.39.137"
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=5e-05 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroBondsRet.xlsx | r_c=0.0002 | beta=1e-05 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+Traceback (most recent call last):
+  File "rmvp/test_warmstart.py", line 374, in <module>
+    run_warm_start_rmvp1_compare(drop_fractions=[0], run_gurobi=True)
+  File "rmvp/test_warmstart.py", line 167, in run_warm_start_rmvp1_compare
+    obj_bnb, nnz_bnb, time_bnb, time_bnb_cpu = solve_bnb_rmvp1(
+  File "rmvp/test_warmstart.py", line 34, in solve_bnb_rmvp1
+    x_bnb, _, supp_bnb, _ = mainRMVP1BnB(D, tau, tau_bar, gamma, beta)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 227, in mainRMVP1BnB
+    x_w_opt, right_lb, lambda_val = solveRMVP1(D_w, tau_bar, tau_w, gamma)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 63, in solveRMVP1
+    D_inv = np.linalg.inv(D)
+  File "<__array_function__ internals>", line 180, in inv
+  File "/opt/python/3.8.10/lib/python3.8/site-packages/numpy/linalg/linalg.py", line 552, in inv
+    ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
+KeyboardInterrupt
+Running RMVP1 warm-start comparison...
+Results will be saved to: rmvp1_warm_start_compare_2026-03-14_17-49.xlsx
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05
+Set parameter TokenServer to value "139.179.39.137"
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=5e-05 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroBondsRet.xlsx | r_c=0.0002 | beta=1e-05 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroBondsRet.xlsx | r_c=0.0002 | beta=5e-06 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroBondsRet.xlsx | r_c=0.0002 | beta=1e-06 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroStoxx50_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroStoxx50_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=5e-05 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=1e-05 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Warm-start RMVP1 comparison completed. Results saved to rmvp1_warm_start_compare_2026-03-14_17-49.xlsx
+Results will be saved to: rmvp2_warm_start_compare_2026-03-14_17-50.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+
+Interrupt request received
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+
+Interrupt request received
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroBondsRet.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+
+Interrupt request received
+Traceback (most recent call last):
+  File "rmvp/test_warmstart.py", line 375, in <module>
+  File "rmvp/test_warmstart.py", line 318, in run_warm_start_rmvp2_compare
+    result_row = {
+  File "rmvp/test_warmstart.py", line 17, in solve_bnb_rmvp2
+    x_bnb, _, supp_bnb, _ = mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 772, in mainRMVP2BnB
+    x_w_opt, right_lb, lambda_val = solveRMVP2(D_w, tau_bar, tau_w, gamma, beta, t)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 608, in solveRMVP2
+    D_inv = np.linalg.inv(D)
+  File "<__array_function__ internals>", line 180, in inv
+  File "/opt/python/3.8.10/lib/python3.8/site-packages/numpy/linalg/linalg.py", line 552, in inv
+    ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
+KeyboardInterrupt
+Running RMVP1 warm-start comparison...
+Results will be saved to: rmvp1_warm_start_compare_2026-03-14_21-13.xlsx
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05
+Set parameter TokenServer to value "139.179.39.137"
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=5e-05 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroBondsRet.xlsx | r_c=0.0002 | beta=1e-05 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroBondsRet.xlsx | r_c=0.0002 | beta=5e-06 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroBondsRet.xlsx | r_c=0.0002 | beta=1e-06 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroStoxx50_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroStoxx50_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=5e-05 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=1e-05 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+MIP GUROBI status:  2
+global_ub <= lb
+Warm-start RMVP1 comparison completed. Results saved to rmvp1_warm_start_compare_2026-03-14_21-13.xlsx
+Results will be saved to: rmvp2_warm_start_compare_2026-03-14_21-14.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroBondsRet.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Traceback (most recent call last):
+  File "rmvp/test_warmstart.py", line 363, in <module>
+    run_warm_start_rmvp2_compare(drop_fractions=[0], run_gurobi=True) #nasdaq100
+  File "rmvp/test_warmstart.py", line 306, in run_warm_start_rmvp2_compare
+    obj_bnb, nnz_bnb, time_bnb, time_bnb_cpu = solve_bnb_rmvp2(
+  File "rmvp/test_warmstart.py", line 17, in solve_bnb_rmvp2
+    x_bnb, _, supp_bnb, _ = mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 772, in mainRMVP2BnB
+    x_w_opt, right_lb, lambda_val = solveRMVP2(D_w, tau_bar, tau_w, gamma, beta, t)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 608, in solveRMVP2
+    D_inv = np.linalg.inv(D)
+  File "<__array_function__ internals>", line 180, in inv
+  File "/opt/python/3.8.10/lib/python3.8/site-packages/numpy/linalg/linalg.py", line 552, in inv
+    ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
+KeyboardInterrupt
+Running RMVP1 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-16_13-13.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Running RMVP1 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-16_16-01.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroStoxx50_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroStoxx50_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=0.005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-16_16-01.xlsx
+Traceback (most recent call last):
+  File "deniz_test/test.py", line 370, in <module>
+    excel_kaydet(wb, tum_ozet, CIKTI_YOLU)
+  File "deniz_test/test.py", line 287, in excel_kaydet
+    wb.save(cikti_yolu)
+  File "/home/ecyayla/.local/lib/python3.8/site-packages/openpyxl/workbook/workbook.py", line 386, in save
+    save_workbook(self, filename)
+  File "/home/ecyayla/.local/lib/python3.8/site-packages/openpyxl/writer/excel.py", line 291, in save_workbook
+    archive = ZipFile(filename, 'w', ZIP_DEFLATED, allowZip64=True)
+  File "/opt/python/3.8.10/lib/python3.8/zipfile.py", line 1251, in __init__
+    self.fp = io.open(file, filemode)
+FileNotFoundError: [Errno 2] No such file or directory: 'C:/Users/Bülent Özin/Downloads/Test2/sonuclar.xlsx'
+
+Interrupt request received
+
+Interrupt request received
+
+Interrupt request received
+
+Interrupt request received
+
+Interrupt request received
+
+Interrupt request received
+
+Interrupt request received
+Running RMVP1 warm-start comparison...
+Results will be saved to: rmvp1_warm_start_compare_2026-03-23_13-24.xlsx
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/NASDAQ100_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/NASDAQ100_returns.xlsx | r_c=0.0002 | beta=5e-05 | tr=1.05
+global_ub <= lb
+Warm-start RMVP1 comparison completed. Results saved to rmvp1_warm_start_compare_2026-03-23_13-24.xlsx
+Running RMVP1 warm-start comparison...
+Results will be saved to: rmvp1_warm_start_compare_2026-03-23_14-02.xlsx
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/NASDAQ100_returns.xlsx | r_c=0.0002 | beta=1e-05 | tr=1.05
+Traceback (most recent call last):
+  File "rmvp/test_warmstart.py", line 362, in <module>
+    run_warm_start_rmvp1_compare(drop_fractions=[0], run_gurobi=False)
+  File "rmvp/test_warmstart.py", line 161, in run_warm_start_rmvp1_compare
+    obj_bnb, nnz_bnb, time_bnb, time_bnb_cpu = solve_bnb_rmvp1(
+  File "rmvp/test_warmstart.py", line 34, in solve_bnb_rmvp1
+    x_bnb, _, supp_bnb, _ = mainRMVP1BnB(D, tau, tau_bar, gamma, beta)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 227, in mainRMVP1BnB
+    x_w_opt, right_lb, lambda_val = solveRMVP1(D_w, tau_bar, tau_w, gamma)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 63, in solveRMVP1
+    D_inv = np.linalg.inv(D)
+  File "<__array_function__ internals>", line 180, in inv
+  File "/opt/python/3.8.10/lib/python3.8/site-packages/numpy/linalg/linalg.py", line 552, in inv
+    ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
+KeyboardInterrupt
+Running RMVP1 warm-start comparison...
+Results will be saved to: rmvp1_warm_start_compare_2026-03-23_16-15.xlsx
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/NASDAQ100_returns.xlsx | r_c=0.0002 | beta=1e-05 | tr=1.05
+Traceback (most recent call last):
+  File "rmvp/test_warmstart.py", line 362, in <module>
+    run_warm_start_rmvp1_compare(drop_fractions=[0], run_gurobi=False)
+  File "rmvp/test_warmstart.py", line 161, in run_warm_start_rmvp1_compare
+    obj_bnb, nnz_bnb, time_bnb, time_bnb_cpu = solve_bnb_rmvp1(
+  File "rmvp/test_warmstart.py", line 34, in solve_bnb_rmvp1
+    x_bnb, _, supp_bnb, _ = mainRMVP1BnB(D, tau, tau_bar, gamma, beta)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 227, in mainRMVP1BnB
+    x_w_opt, right_lb, lambda_val = solveRMVP1(D_w, tau_bar, tau_w, gamma)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 63, in solveRMVP1
+    D_inv = np.linalg.inv(D)
+  File "<__array_function__ internals>", line 180, in inv
+  File "/opt/python/3.8.10/lib/python3.8/site-packages/numpy/linalg/linalg.py", line 552, in inv
+    ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
+KeyboardInterrupt
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-23_20-15.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.01 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-23_20-15.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-23_20-17.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.01 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.005 | tr=1.05 | t=1.0
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-23_20-17.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-23_20-29.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=5e-05 | tr=1.05 | t=1.0
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-23_20-29.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-23_20-37.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=10
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=10
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=10
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=5e-05 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=5e-05 | tr=1.05 | t=10
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-23_20-37.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-23_21-12.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.1 | tr=1.05 | t=1.0
+    Skipping solver: insufficient assets after assumption filtering.
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.1 | tr=1.05 | t=10
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.1 | tr=1.05 | t=100
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.1 | tr=1.05 | t=1000
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.05 | tr=1.05 | t=1.0
+    Skipping solver: insufficient assets after assumption filtering.
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.05 | tr=1.05 | t=10
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.05 | tr=1.05 | t=100
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.05 | tr=1.05 | t=1000
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.01 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.01 | tr=1.05 | t=10
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.01 | tr=1.05 | t=100
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.01 | tr=1.05 | t=1000
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.005 | tr=1.05 | t=10
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.005 | tr=1.05 | t=100
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.005 | tr=1.05 | t=1000
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=10
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=100
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1000
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=10
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=100
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1000
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=10
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=100
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=1000
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=5e-05 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=5e-05 | tr=1.05 | t=10
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=5e-05 | tr=1.05 | t=100
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=5e-05 | tr=1.05 | t=1000
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-23_21-12.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-23_21-18.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=10 | tr=1.05 | t=1.0
+    Skipping solver: insufficient assets after assumption filtering.
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=10 | tr=1.05 | t=10
+    Skipping solver: insufficient assets after assumption filtering.
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=10 | tr=1.05 | t=100
+    Skipping solver: insufficient assets after assumption filtering.
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=10 | tr=1.05 | t=1000
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=5 | tr=1.05 | t=1.0
+    Skipping solver: insufficient assets after assumption filtering.
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=5 | tr=1.05 | t=10
+    Skipping solver: insufficient assets after assumption filtering.
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=5 | tr=1.05 | t=100
+    Skipping solver: insufficient assets after assumption filtering.
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=5 | tr=1.05 | t=1000
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=1 | tr=1.05 | t=1.0
+    Skipping solver: insufficient assets after assumption filtering.
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=1 | tr=1.05 | t=10
+    Skipping solver: insufficient assets after assumption filtering.
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=1 | tr=1.05 | t=100
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=1 | tr=1.05 | t=1000
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.5 | tr=1.05 | t=1.0
+    Skipping solver: insufficient assets after assumption filtering.
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.5 | tr=1.05 | t=10
+    Skipping solver: insufficient assets after assumption filtering.
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.5 | tr=1.05 | t=100
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.5 | tr=1.05 | t=1000
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.1 | tr=1.05 | t=1.0
+    Skipping solver: insufficient assets after assumption filtering.
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.1 | tr=1.05 | t=10
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.1 | tr=1.05 | t=100
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.1 | tr=1.05 | t=1000
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.05 | tr=1.05 | t=1.0
+    Skipping solver: insufficient assets after assumption filtering.
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.05 | tr=1.05 | t=10
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.05 | tr=1.05 | t=100
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.05 | tr=1.05 | t=1000
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-23_21-18.xlsx
+Running RMVP1 warm-start comparison...
+Results will be saved to: rmvp1_warm_start_compare_2026-03-23_21-39.xlsx
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/NASDAQ100_returns.xlsx | r_c=0.0002 | beta=1e-05 | tr=1.05
+Traceback (most recent call last):
+  File "rmvp/test_warmstart.py", line 362, in <module>
+    run_warm_start_rmvp1_compare(drop_fractions=[0.5, 0.4], run_gurobi=False),
+  File "rmvp/test_warmstart.py", line 161, in run_warm_start_rmvp1_compare
+    obj_bnb, nnz_bnb, time_bnb, time_bnb_cpu = solve_bnb_rmvp1(
+  File "rmvp/test_warmstart.py", line 34, in solve_bnb_rmvp1
+    x_bnb, _, supp_bnb, _ = mainRMVP1BnB(D, tau, tau_bar, gamma, beta)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 227, in mainRMVP1BnB
+    x_w_opt, right_lb, lambda_val = solveRMVP1(D_w, tau_bar, tau_w, gamma)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 63, in solveRMVP1
+    D_inv = np.linalg.inv(D)
+  File "<__array_function__ internals>", line 180, in inv
+  File "/opt/python/3.8.10/lib/python3.8/site-packages/numpy/linalg/linalg.py", line 552, in inv
+    ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
+KeyboardInterrupt
+Running RMVP1 warm-start comparison...
+Results will be saved to: rmvp1_warm_start_compare_2026-03-24_01-22.xlsx
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/NASDAQ100_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05
+global_ub <= lb
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/NASDAQ100_returns.xlsx | r_c=0.0002 | beta=5e-05 | tr=1.05
+global_ub <= lb
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/NASDAQ100_returns.xlsx | r_c=0.0002 | beta=1e-05 | tr=1.05
+global_ub <= lb
+Traceback (most recent call last):
+  File "rmvp/test_warmstart.py", line 362, in <module>
+    run_warm_start_rmvp1_compare(drop_fractions=[0.5, 0.4], run_gurobi=False),
+  File "rmvp/test_warmstart.py", line 161, in run_warm_start_rmvp1_compare
+    obj_bnb, nnz_bnb, time_bnb, time_bnb_cpu = solve_bnb_rmvp1(
+  File "rmvp/test_warmstart.py", line 34, in solve_bnb_rmvp1
+    x_bnb, _, supp_bnb, _ = mainRMVP1BnB(D, tau, tau_bar, gamma, beta)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 227, in mainRMVP1BnB
+    x_w_opt, right_lb, lambda_val = solveRMVP1(D_w, tau_bar, tau_w, gamma)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 63, in solveRMVP1
+    D_inv = np.linalg.inv(D)
+  File "<__array_function__ internals>", line 180, in inv
+  File "/opt/python/3.8.10/lib/python3.8/site-packages/numpy/linalg/linalg.py", line 552, in inv
+    ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
+KeyboardInterrupt
+Running RMVP1 warm-start comparison...
+Results will be saved to: rmvp1_warm_start_compare_2026-03-24_01-50.xlsx
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/NASDAQ100_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05
+Set parameter TokenServer to value "139.179.39.137"
+MIP GUROBI status:  2
+global_ub <= lb
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/NASDAQ100_returns.xlsx | r_c=0.0002 | beta=5e-05 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+global_ub <= lb
+Processing RMVP1 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/NASDAQ100_returns.xlsx | r_c=0.0002 | beta=1e-05 | tr=1.05
+MIP GUROBI status:  2
+global_ub <= lb
+global_ub <= lb
+Warm-start RMVP1 comparison completed. Results saved to rmvp1_warm_start_compare_2026-03-24_01-50.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-24_16-50.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=5e-05 | tr=1.05 | t=1.0
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-24_16-50.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-24_16-54.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+
+Interrupt request received
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+
+Interrupt request received
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=1.0
+
+Interrupt request received
+Traceback (most recent call last):
+  File "rmvp/test_warmstart.py", line 365, in <module>
+    run_warm_start_rmvp2_compare(drop_fractions=[0], run_gurobi=True)
+  File "rmvp/test_warmstart.py", line 306, in run_warm_start_rmvp2_compare
+    obj_bnb, nnz_bnb, time_bnb, time_bnb_cpu = solve_bnb_rmvp2(
+  File "rmvp/test_warmstart.py", line 17, in solve_bnb_rmvp2
+    x_bnb, _, supp_bnb, _ = mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 782, in mainRMVP2BnB
+    x_w_opt, left_ub, lambda_val = solveRMVP2(D_w, tau_bar, tau_w, gamma, beta, t)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 608, in solveRMVP2
+    D_inv = np.linalg.inv(D)
+  File "<__array_function__ internals>", line 180, in inv
+  File "/opt/python/3.8.10/lib/python3.8/site-packages/numpy/linalg/linalg.py", line 552, in inv
+    ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
+KeyboardInterrupt
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-24_21-56.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.01 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=0.005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-24_21-56.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-24_21-56.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroStoxx50_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroStoxx50_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Traceback (most recent call last):
+  File "rmvp/test_warmstart.py", line 365, in <module>
+    run_warm_start_rmvp2_compare(drop_fractions=[0], run_gurobi=True)
+  File "rmvp/test_warmstart.py", line 306, in run_warm_start_rmvp2_compare
+    obj_bnb, nnz_bnb, time_bnb, time_bnb_cpu = solve_bnb_rmvp2(
+  File "rmvp/test_warmstart.py", line 17, in solve_bnb_rmvp2
+    x_bnb, _, supp_bnb, _ = mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 772, in mainRMVP2BnB
+    x_w_opt, right_lb, lambda_val = solveRMVP2(D_w, tau_bar, tau_w, gamma, beta, t)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 608, in solveRMVP2
+    D_inv = np.linalg.inv(D)
+  File "<__array_function__ internals>", line 180, in inv
+  File "/opt/python/3.8.10/lib/python3.8/site-packages/numpy/linalg/linalg.py", line 552, in inv
+    ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
+KeyboardInterrupt
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-25_16-06.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+
+Interrupt request received
+Traceback (most recent call last):
+  File "rmvp/test_warmstart.py", line 365, in <module>
+    run_warm_start_rmvp2_compare(drop_fractions=[0.5], run_gurobi=True)
+  File "rmvp/test_warmstart.py", line 306, in run_warm_start_rmvp2_compare
+    obj_bnb, nnz_bnb, time_bnb, time_bnb_cpu = solve_bnb_rmvp2(
+  File "rmvp/test_warmstart.py", line 17, in solve_bnb_rmvp2
+    x_bnb, _, supp_bnb, _ = mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 772, in mainRMVP2BnB
+    x_w_opt, right_lb, lambda_val = solveRMVP2(D_w, tau_bar, tau_w, gamma, beta, t)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 608, in solveRMVP2
+    D_inv = np.linalg.inv(D)
+  File "<__array_function__ internals>", line 180, in inv
+  File "/opt/python/3.8.10/lib/python3.8/site-packages/numpy/linalg/linalg.py", line 552, in inv
+    ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
+KeyboardInterrupt
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-25_16-08.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/NASDAQ100_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+
+Interrupt request received
+Traceback (most recent call last):
+  File "rmvp/test_warmstart.py", line 365, in <module>
+    run_warm_start_rmvp2_compare(drop_fractions=[0.5, 0.4], run_gurobi=True)
+  File "rmvp/test_warmstart.py", line 306, in run_warm_start_rmvp2_compare
+    obj_bnb, nnz_bnb, time_bnb, time_bnb_cpu = solve_bnb_rmvp2(
+  File "rmvp/test_warmstart.py", line 17, in solve_bnb_rmvp2
+    x_bnb, _, supp_bnb, _ = mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 772, in mainRMVP2BnB
+    x_w_opt, right_lb, lambda_val = solveRMVP2(D_w, tau_bar, tau_w, gamma, beta, t)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 608, in solveRMVP2
+    D_inv = np.linalg.inv(D)
+  File "<__array_function__ internals>", line 180, in inv
+  File "/opt/python/3.8.10/lib/python3.8/site-packages/numpy/linalg/linalg.py", line 552, in inv
+    ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
+KeyboardInterrupt
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-25_16-14.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-25_16-14.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-25_16-19.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroStoxx50_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroStoxx50_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=0.005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-25_16-19.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-25_16-25.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=0.005 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-25_16-25.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-25_17-55.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=0.005 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-25_17-55.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-25_17-59.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-25_17-59.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-25_18-00.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-25_18-00.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-25_18-04.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroStoxx50_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroStoxx50_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=1.0
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-25_18-04.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-25_18-14.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/DowJones_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ETF.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroStoxx50_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/EuroStoxx50_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=0.005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/ItalianBondsandCommodities.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-25_18-14.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-25_18-24.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/NASDAQ100_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+global_ub <= lb
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/NASDAQ100_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-25_18-24.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-26_21-05.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/SP500_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/SP500_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/SP500_returns.xlsx | r_c=0.0002 | beta=0.0001 | tr=1.05 | t=1.0
+global_ub <= lb
+Warm-start RMVP2 comparison completed. Results saved to rmvp2_warm_start_compare_2026-03-26_21-05.xlsx
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-28_13-14.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+
+Interrupt request received
+Traceback (most recent call last):
+  File "rmvp/test_warmstart.py", line 365, in <module>
+    run_warm_start_rmvp2_compare(drop_fractions=[0.6, 0.5], run_gurobi=True)
+  File "rmvp/test_warmstart.py", line 288, in run_warm_start_rmvp2_compare
+    obj_gurobi, nnz_gurobi, gap_gurobi, time_gurobi, time_gurobi_cpu = solve_gurobi_rmvp2(
+  File "rmvp/test_warmstart.py", line 47, in solve_gurobi_rmvp2
+    x_mip_gurobi, _, gap_mip_gurobi = RMVP2_mipGUROBI(D, tau, tau_bar, gamma, beta, t)
+KeyboardInterrupt
+Running RMVP2 warm-start comparison...
+Results will be saved to: rmvp2_warm_start_compare_2026-03-28_16-03.xlsx
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.001 | tr=1.05 | t=1.0
+Set parameter TokenServer to value "139.179.39.137"
+
+Interrupt request received
+[0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 2.57549049e-03 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 2.20227548e-03 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 4.79069141e-05
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 3.64576349e-04 0.00000000e+00]
+global_ub <= lb
+[0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 2.57549049e-03 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 2.20227548e-03 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 4.79069141e-05
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 0.00000000e+00 0.00000000e+00 0.00000000e+00
+ 0.00000000e+00 3.64576349e-04 0.00000000e+00]
+global_ub <= lb
+Processing RMVP2 /home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/datasets/FTSE100_returns.xlsx | r_c=0.0002 | beta=0.0005 | tr=1.05 | t=1.0
+
+Interrupt request received
+[0.         0.         0.         0.         0.         0.
+ 0.00026216 0.         0.         0.         0.         0.
+ 0.00093495 0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.        ]
+global_ub <= lb
+[0.         0.         0.         0.         0.         0.
+ 0.00026216 0.         0.         0.         0.         0.
+ 0.00093495 0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.         0.         0.         0.         0.
+ 0.         0.        ]
+Traceback (most recent call last):
+  File "rmvp/test_warmstart.py", line 365, in <module>
+    run_warm_start_rmvp2_compare(drop_fractions=[0.6, 0.5], run_gurobi=True)
+  File "rmvp/test_warmstart.py", line 306, in run_warm_start_rmvp2_compare
+    obj_bnb, nnz_bnb, time_bnb, time_bnb_cpu = solve_bnb_rmvp2(
+  File "rmvp/test_warmstart.py", line 17, in solve_bnb_rmvp2
+    x_bnb, _, supp_bnb, _ = mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 772, in mainRMVP2BnB
+    x_w_opt, right_lb, lambda_val = solveRMVP2(D_w, tau_bar, tau_w, gamma, beta, t)
+  File "/home/ecyayla/projects/robust-mean-variance-portfolio-optimization/rmvp/main.py", line 608, in solveRMVP2
+    D_inv = np.linalg.inv(D)
+  File "<__array_function__ internals>", line 180, in inv
+  File "/opt/python/3.8.10/lib/python3.8/site-packages/numpy/linalg/linalg.py", line 552, in inv
+    ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
+KeyboardInterrupt

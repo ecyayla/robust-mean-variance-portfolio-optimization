@@ -540,8 +540,8 @@ def run_experiments_rmvp2(run_gurobi: bool = False):
 
 if __name__ == "__main__":
 
-    #run_experiments_rmvp1()
-    run_experiments_rmvp2()
+    run_experiments_rmvp1()
+    #run_experiments_rmvp2()
 
 
 
