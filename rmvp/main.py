@@ -169,6 +169,7 @@ def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='auto', branch_rule='max_l
     Branch-and-bound algorithm for CP-RMVP problem:
         min_{x in R^n} x^T D x  s.t.  tau^T x - gamma * ||x||_D >= tau_bar
     """
+    np.random.seed(42)
     relErr = 1e-8
 
     if traverse_rule == 'bfs':
@@ -202,7 +203,7 @@ def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='auto', branch_rule='max_l
             global_x = x1
 
         if global_ub - lb <= relErr:
-            print("global_ub <= lb")
+            #print("global_ub <= lb")
             break
         if Psupp.size == 0:
             continue
@@ -714,6 +715,7 @@ def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='auto', branch_rule='ma
     """
     Branch-and-bound algorithm for CP-RMVP2 problem (same structure as mainRMVP1BnB).
     """
+    np.random.seed(42)
     relErr = 1e-8
 
     if traverse_rule == 'bfs':
@@ -747,7 +749,7 @@ def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='auto', branch_rule='ma
             global_x = x1
 
         if global_ub - lb <= relErr:
-            print("global_ub <= lb")
+            #print("global_ub <= lb")
             break
         if Psupp.size == 0:
             continue

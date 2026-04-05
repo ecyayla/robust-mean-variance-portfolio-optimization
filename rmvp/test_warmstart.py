@@ -68,7 +68,7 @@ def solve_gurobi_rmvp1(D, tau, tau_bar, gamma, beta):
     return obj, nnz, gap_mip_gurobi, time_wall, time_cpu
 
 
-def run_warm_start_rmvp1_compare(drop_fractions=None, run_gurobi: bool = False):
+def run_warm_start_rmvp1_compare(drop_fractions=None, run_gurobi: bool = False, drop_farthest: bool = True):
     results = []
     gurobi_cache = {}
 
@@ -81,8 +81,6 @@ def run_warm_start_rmvp1_compare(drop_fractions=None, run_gurobi: bool = False):
         print("No datasets found.")
         return
 
-    if drop_fractions is None:
-        drop_fractions = [0.1]
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
     output_file = f"rmvp1_warm_start_compare_{timestamp}.xlsx"
@@ -151,8 +149,19 @@ def run_warm_start_rmvp1_compare(drop_fractions=None, run_gurobi: bool = False):
                     time_gurobi = "no gurobi"
                     time_gurobi_cpu = "no gurobi"
 
-                for drop_fraction in drop_fractions:
-                    warm = warm_start_rmvp1(D, tau, tau_bar, gamma, beta_scaled, drop_fraction=drop_fraction)
+                drop_fractions_for_beta = drop_fractions
+                if drop_fractions_for_beta is None:
+                    drop_map = ds_cfg.get("drop_fractions_by_beta", {})
+                    drop_fractions_for_beta = drop_map.get(str(beta), drop_map.get(beta, []))
+
+                for drop_fraction in drop_fractions_for_beta:
+                    warm_start_cpu_begin = time.process_time()
+                    warm = warm_start_rmvp1(
+                        D, tau, tau_bar, gamma, beta_scaled,
+                        drop_fraction=drop_fraction,
+                        drop_farthest=drop_farthest,
+                    )
+                    warm_start_cpu_time = time.process_time() - warm_start_cpu_begin
                     D_red = warm["D_reduced"]
                     tau_red = warm["tau_reduced"]
                     n_warm_start = int(len(tau_red))
@@ -161,6 +170,7 @@ def run_warm_start_rmvp1_compare(drop_fractions=None, run_gurobi: bool = False):
                     obj_bnb, nnz_bnb, time_bnb, time_bnb_cpu = solve_bnb_rmvp1(
                         D_red, tau_red, tau_bar, gamma, beta_scaled
                     )
+                    total_cpu_time = warm_start_cpu_time + time_bnb_cpu
 
                     if run_gurobi:
                         if obj_gurobi == 0:
@@ -184,12 +194,15 @@ def run_warm_start_rmvp1_compare(drop_fractions=None, run_gurobi: bool = False):
                         "dropped_gamma": dropped_gamma,
                         "dropped_t": dropped_t,
                         "drop_fraction": drop_fraction,
+                        "drop_farthest": drop_farthest,
                         "n_warm_start": n_warm_start,
                         "warm_start_dropped_assets": warm_dropped,
+                        "time_cpu_warm_start": warm_start_cpu_time,
                         "obj_BnB_warm": obj_bnb,
                         "nnz_BnB_warm": nnz_bnb,
                         "time_BnB_warm": time_bnb,
                         "time_cpu_BnB_warm": time_bnb_cpu,
+                        "time_cpu_total": total_cpu_time,
                         "obj_MIP_GUROBI": obj_gurobi,
                         "nnz_MIP_GUROBI": nnz_gurobi,
                         "time_MIP_GUROBI": time_gurobi,
@@ -212,7 +225,7 @@ def run_warm_start_rmvp1_compare(drop_fractions=None, run_gurobi: bool = False):
     print(f"Warm-start RMVP1 comparison completed. Results saved to {output_file}")
 
 
-def run_warm_start_rmvp2_compare(drop_fractions=None, run_gurobi: bool = False):
+def run_warm_start_rmvp2_compare(drop_fractions=None, run_gurobi: bool = False, drop_farthest: bool = True):
     results = []
     gurobi_cache = {}
 
@@ -224,9 +237,6 @@ def run_warm_start_rmvp2_compare(drop_fractions=None, run_gurobi: bool = False):
     if not data_files:
         print("No datasets found.")
         return
-
-    if drop_fractions is None:
-        drop_fractions = [0.1]
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
     output_file = f"rmvp2_warm_start_compare_{timestamp}.xlsx"
@@ -296,8 +306,19 @@ def run_warm_start_rmvp2_compare(drop_fractions=None, run_gurobi: bool = False):
                     time_gurobi = "no gurobi"
                     time_gurobi_cpu = "no gurobi"
 
-                for drop_fraction in drop_fractions:
-                    warm = warm_start_rmvp2(D, tau, tau_bar, gamma, beta_scaled, t, drop_fraction=drop_fraction)
+                drop_fractions_for_beta = drop_fractions
+                if drop_fractions_for_beta is None:
+                    drop_map = ds_cfg.get("drop_fractions_by_beta", {})
+                    drop_fractions_for_beta = drop_map.get(str(beta), drop_map.get(beta, []))
+
+                for drop_fraction in drop_fractions_for_beta:
+                    warm_start_cpu_begin = time.process_time()
+                    warm = warm_start_rmvp2(
+                        D, tau, tau_bar, gamma, beta_scaled, t,
+                        drop_fraction=drop_fraction,
+                        drop_farthest=drop_farthest,
+                    )
+                    warm_start_cpu_time = time.process_time() - warm_start_cpu_begin
                     D_red = warm["D_reduced"]
                     tau_red = warm["tau_reduced"]
                     n_warm_start = int(len(tau_red))
@@ -306,6 +327,7 @@ def run_warm_start_rmvp2_compare(drop_fractions=None, run_gurobi: bool = False):
                     obj_bnb, nnz_bnb, time_bnb, time_bnb_cpu = solve_bnb_rmvp2(
                         D_red, tau_red, tau_bar, gamma, beta_scaled, t
                     )
+                    total_cpu_time = warm_start_cpu_time + time_bnb_cpu
 
                     if run_gurobi:
                         if obj_gurobi == 0:
@@ -329,12 +351,15 @@ def run_warm_start_rmvp2_compare(drop_fractions=None, run_gurobi: bool = False):
                         "dropped_gamma": dropped_gamma,
                         "dropped_t": dropped_t,
                         "drop_fraction": drop_fraction,
+                        "drop_farthest": drop_farthest,
                         "n_warm_start": n_warm_start,
                         "warm_start_dropped_assets": warm_dropped,
+                        "time_cpu_warm_start": warm_start_cpu_time,
                         "obj_BnB_warm": obj_bnb,
                         "nnz_BnB_warm": nnz_bnb,
                         "time_BnB_warm": time_bnb,
                         "time_cpu_BnB_warm": time_bnb_cpu,
+                        "time_cpu_total": total_cpu_time,
                         "obj_MIP_GUROBI": obj_gurobi,
                         "nnz_MIP_GUROBI": nnz_gurobi,
                         "time_MIP_GUROBI": time_gurobi,
@@ -359,7 +384,7 @@ def run_warm_start_rmvp2_compare(drop_fractions=None, run_gurobi: bool = False):
 
 if __name__ == "__main__":
     #print("Running RMVP1 warm-start comparison...")
-    #run_warm_start_rmvp1_compare(drop_fractions=[0.5, 0.4], run_gurobi=True),
+    #run_warm_start_rmvp1_compare(drop_fractions=None, run_gurobi=False, drop_farthest=True)
 
     print("Running RMVP2 warm-start comparison...")
-    run_warm_start_rmvp2_compare(drop_fractions=[0.6, 0.5], run_gurobi=True)
+    run_warm_start_rmvp2_compare(drop_fractions=None, run_gurobi=False, drop_farthest=True)
