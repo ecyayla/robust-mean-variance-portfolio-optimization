@@ -8,82 +8,79 @@ from itertools import product
 from datetime import datetime
 from main import mainRMVP1BnB, RMVP1_mipGUROBI, mainRMVP2BnB, RMVP2_mipGUROBI, zeropadding
 
+def _base_problem_data(file_path, sheet_name, r_c, gamma, beta,
+                       target_return_factor, scale_returns):
+    """Common problem data shared by RMVP1 and RMVP2, BEFORE any assumption
+    filtering: loads returns, builds D, tau, tau_bar and resolves gamma.
+    If gamma == 0, a dynamic gamma just below the feasibility boundary is used:
+    gamma = min(|tau|/sqrt(D_ii)) - eps."""
+    # 1. Load data (no header assumed) and scale.
+    df = pd.read_excel(file_path, sheet_name=sheet_name, header=None)
+    returns = df.values * scale_returns
+    n_samples, n_assets = returns.shape
+
+    # 2. Statistics.
+    r_hat = returns.mean(axis=0)
+    returns_centered = returns - r_hat
+    D = (returns_centered.T @ returns_centered) / (n_samples - 1)
+
+    # 3. Target / excess parameters.
+    r_c_scaled = r_c * scale_returns
+    bar_r = r_c_scaled * target_return_factor
+    if bar_r <= r_c_scaled:                 # generic guard: target must exceed r_c
+        bar_r = r_c_scaled + 1e-4
+    tau = r_hat - r_c_scaled
+    tau_bar = bar_r - r_c_scaled
+
+    # Dynamic gamma (only when gamma == 0).
+    if gamma == 0:
+        ratios = np.abs(tau) / np.maximum(np.sqrt(np.diag(D)), 1e-8)
+        gamma = max(1e-6, np.min(ratios) - 1e-5)
+
+    return {
+        "n": n_assets, "D": D, "r_hat": r_hat, "r_c": r_c_scaled, "gamma": gamma,
+        "beta": beta, "bar_r": bar_r, "tau": tau, "tau_bar": tau_bar,
+        "num_samples": n_samples, "scale_returns": scale_returns,
+    }
+
+
 def generate_rmvp1_data(
-    file_path: str, 
-    sheet_name: str = 'AssetReturns', 
-    r_c: float = 0.00001, 
-    gamma: float = 0.01, 
-    beta: float = 1.0, 
+    file_path: str,
+    sheet_name: str = 'AssetReturns',
+    r_c: float = 0.00001,
+    gamma: float = 0.01,
+    beta: float = 1.0,
     target_return_factor: float = 1.1,
     scale_returns: float = 100.0
 ):
     """
-    Generates RMVP1 problem data from an Excel file.
-    If gamma is passed as 0, it calculates a dynamic gamma based on the feasibility boundary:
-    gamma = min(|tau| / sqrt(D_ii)) - eps
+    Generates RMVP1 problem data with Assumption 1 applied:
+        keep asset i iff |tau_i| > gamma * sqrt(D_ii).
+    Returns the FILTERED D/tau plus bookkeeping (n_full, n_filtered, dropped_gamma,
+    dropped_t=0, idx_keep). "n" is the filtered problem size (so zero-padding a BnB
+    solution to "n" stays consistent with the returned D). If all assets are dropped,
+    D and tau are None.
     """
-    # 1. Load Data (No header assumed)
-    df = pd.read_excel(file_path, sheet_name=sheet_name, header=None)
-    returns = df.values * scale_returns  # Matrix of daily returns (scaled)
-    n_samples, n_assets = returns.shape
-    
-    # 2. Compute Statistics
-    r_hat = returns.mean(axis=0)
-    returns_centered = returns - r_hat
+    data = _base_problem_data(file_path, sheet_name, r_c, gamma, beta,
+                              target_return_factor, scale_returns)
+    D_full, tau_full, gamma = data["D"], data["tau"], data["gamma"]
 
-    D = (returns_centered.T @ returns_centered) / (n_samples - 1)
-    
-    # 3. Setup Problem Parameters
-    # Scale risk-free rate to match scaled returns
-    r_c_scaled = r_c * scale_returns
-
-    if r_c == 0:
-        #avg_pos_return = np.mean(r_hat[r_hat > 0]) if np.any(r_hat > 0) else 0.001
-        #bar_r = avg_pos_return * target_return_factor
-        bar_r = 0.001 * scale_returns
-    else:
-        bar_r = r_c_scaled * target_return_factor
-    
-    if bar_r <= r_c_scaled:
-            # Adjust bar_r if assumption violated, or let it slide? 
-            # For testing, we might want to enforce valid inputs, but let's just proceed or adjust.
-            bar_r = r_c_scaled + 1e-4
-    
-    # Calculate Excess parameters
-    tau = r_hat - r_c_scaled             
-    tau_bar = bar_r - r_c_scaled
-    
-    # Calculate ratios for gamma logic
-    D_diag_sqrt = np.sqrt(np.diag(D))
-    # Avoid division by zero
-    ratios = np.abs(tau) / np.maximum(D_diag_sqrt, 1e-8)
-    min_ratio = np.min(ratios)
-
-    # Dynamic Gamma Logic
-    if gamma == 0:
-        eps = 1e-5
-        # Ensure gamma is positive and strictly less than min_ratio
-        gamma = max(1e-6, min_ratio - eps)
-
-    # Scale beta consistently with covariance scaling (D scales with scale_returns^2)
-    #beta_scaled = beta * (scale_returns ** 2)
-
-    # 4. Pack into Dictionary
-    problem_data = {
-        "n": n_assets,
-        "D": D,
-        "r_hat": r_hat,
-        "r_c": r_c_scaled,
-        "gamma": gamma,
-        "beta": beta,
-        "bar_r": bar_r,
-        "tau": tau,
-        "tau_bar": tau_bar,
-        "num_samples": n_samples,
-        "scale_returns": scale_returns
-    }
-    
-    return problem_data
+    keep = np.abs(tau_full) > gamma * np.sqrt(np.diag(D_full))   # Assumption 1
+    idx_keep = np.where(keep)[0]
+    data["n_full"] = data["n"]
+    data["dropped_gamma"] = int(np.sum(~keep))
+    data["dropped_t"] = 0
+    data["idx_keep"] = idx_keep.tolist()
+    data["n_filtered"] = int(len(idx_keep))
+    if len(idx_keep) == 0:
+        data["D"] = None
+        data["tau"] = None
+        data["n"] = 0
+        return data
+    data["D"] = D_full[np.ix_(idx_keep, idx_keep)]
+    data["tau"] = tau_full[idx_keep]
+    data["n"] = int(len(idx_keep))          # filtered problem size
+    return data
 
 
 def generate_rmvp2_data(
@@ -103,10 +100,10 @@ def generate_rmvp2_data(
       2) t > min_i beta / (|tau_i|/sqrt(D_ii) - gamma)
          If t == 0, set t to min bound + eps.
     """
-    # Reuse RMVP1 generation for common parameters
-    base_data = generate_rmvp1_data(
-        file_path, sheet_name, r_c, gamma, beta, target_return_factor, scale_returns
-    )
+    # Independent base build: call the shared helper, NOT generate_rmvp1_data, so
+    # RMVP1's own Assumption-1 filtering can never double-apply here.
+    base_data = _base_problem_data(file_path, sheet_name, r_c, gamma, beta,
+                                   target_return_factor, scale_returns)
 
     D_full = base_data["D"]
     tau_full = base_data["tau"]
@@ -130,6 +127,7 @@ def generate_rmvp2_data(
         base_data["dropped_gamma"] = dropped_gamma
         base_data["dropped_t"] = 0
         base_data["n_filtered"] = 0
+        base_data["n"] = 0
         return base_data
 
     idx_keep = np.where(keep_mask)[0]
@@ -170,6 +168,7 @@ def generate_rmvp2_data(
         base_data["dropped_gamma"] = dropped_gamma
         base_data["dropped_t"] = dropped_t
         base_data["n_filtered"] = 0
+        base_data["n"] = 0
         return base_data
 
     idx_keep = idx_keep[keep_mask_t]
@@ -184,6 +183,7 @@ def generate_rmvp2_data(
     base_data["dropped_gamma"] = dropped_gamma
     base_data["dropped_t"] = dropped_t
     base_data["n_filtered"] = len(tau_f)
+    base_data["n"] = int(len(tau_f))          # filtered problem size (consistent w/ RMVP1)
     return base_data
 
 

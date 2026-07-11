@@ -72,11 +72,13 @@ def warm_start_rmvp1(D, tau, tau_bar, gamma, beta, drop_fraction=0.1, drop_farth
     D_reduced = D[mask][:, mask]
     tau_reduced = tau[mask]
     x_reduced = x_hat[mask]
+    keep_idx = np.where(mask)[0]
 
     return {
         "D_reduced": D_reduced,
         "tau_reduced": tau_reduced,
         "x_reduced": x_reduced,
+        "keep_idx": keep_idx,
     }
 
 
@@ -130,11 +132,13 @@ def warm_start_rmvp2(D, tau, tau_bar, gamma, beta, t, drop_fraction=0.1, drop_fa
     D_reduced = D[mask][:, mask]
     tau_reduced = tau[mask]
     x_reduced = x_hat[mask]
+    keep_idx = np.where(mask)[0]
 
     return {
         "D_reduced": D_reduced,
         "tau_reduced": tau_reduced,
         "x_reduced": x_reduced,
+        "keep_idx": keep_idx,
     }
 
 

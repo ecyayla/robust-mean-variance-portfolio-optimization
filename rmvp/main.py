@@ -5,8 +5,6 @@ from queue import PriorityQueue, LifoQueue
 import time
 import gurobipy as gp
 from gurobipy import GRB
-# import mosek.fusion as mf  # Disabled: MOSEK not used
-# import mosek  # Disabled: MOSEK not used
 import math
 
 
@@ -164,13 +162,18 @@ def branchVariable_rmvp1(x, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, br
 
 
 
-def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='auto', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None):
+def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='auto', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None, collect_collapse=False):
     """
     Branch-and-bound algorithm for CP-RMVP problem:
         min_{x in R^n} x^T D x  s.t.  tau^T x - gamma * ||x||_D >= tau_bar
+
+    If collect_collapse=True, also returns two lists (collapse_S, collapse_P) recording
+    |S| and |P| at every right-subtree collapse; the return becomes a 6-tuple. Default
+    False keeps the historical 4-tuple return for existing callers.
     """
     np.random.seed(42)
     relErr = 1e-8
+    collapse_S, collapse_P = [], []   # |S|, |P| at each right-subtree collapse
 
     if traverse_rule == 'bfs':
         q = PriorityQueue()
@@ -228,7 +231,21 @@ def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='auto', branch_rule='max_l
             x_w_opt, right_lb, lambda_val = solveRMVP1(D_w, tau_bar, tau_w, gamma)
             right_lb = right_lb + beta * Ssupp.size
 
-            q.put([right_lb, ub, np.random.rand(), Ssupp, Psupp, x1, lambda_val])
+            if right_lb + beta >= global_ub - relErr:          # lb^R + beta >= ub* - eps
+                collapse_S.append(int(Ssupp.size))             # record |S|, |P| at collapse
+                collapse_P.append(int(Psupp.size))
+                if Ssupp.size >= 1:                            # |S| >= 1
+                    D_S   = D[np.ix_(Ssupp, Ssupp)]
+                    tau_S = tau[Ssupp]
+                    x_S_opt, relax_S, _ = solveRMVP1(D_S, tau_bar, tau_S, gamma)
+                    ub_S = relax_S + beta * Ssupp.size         # ub^S = xi(S)^T D_S xi(S) + beta*|S|
+                    if ub_S < global_ub:                       # ub^S < ub*
+                        global_ub   = ub_S                     # ub* <- ub^S
+                        global_x    = x_S_opt                  # x*  <- Xi(S) (reduced; caller zero-pads via global_supp)
+                        global_supp = Ssupp
+            else:
+                q.put([right_lb, ub, np.random.rand(), Ssupp, Psupp, x1, lambda_val])  # Enqueue (x, lb^R, ub, Psupp, S)
+
 
         if left_supp.size >= 1:
             w = left_supp
@@ -241,140 +258,10 @@ def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='auto', branch_rule='max_l
             q.put([lb + beta, left_ub, np.random.rand(), left_supp, Psupp, x_w_opt, lambda_val])
 
     global_supp = np.array(sorted(global_supp.tolist()), dtype=np.int32)
+    if collect_collapse:
+        return global_x, global_ub, global_supp, count, collapse_S, collapse_P
     return global_x, global_ub, global_supp, count
 
-# Old implementation (commented)
-# def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='mosek', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None):
-#     """
-#     Branch-and-bound algorithm for CP-RMVP problem:
-#         min_{x in R^n} x^T D x  s.t.  tau^T x - gamma * ||x||_D >= tau_bar
-#     
-#     Parameters
-#     ----------
-#     D : (n, n) array_like
-#         Positive semidefinite symmetric matrix D.
-#     tau : (n,) array_like
-#         The excess mean return vector estimate tau (ccr in the problem).
-#     tau_bar : float
-#         Scalar parameter tau_bar (bar{ccr} in the problem).
-#     gamma : float
-#         Ellipsoidal uncertainty radius γ.
-#     beta : float
-#         Sparsity penalty parameter.
-#     method : str, optional
-#         Solver method (not used currently).
-#     branch_rule : str, optional
-#         Branching rule ('max_lagrangian_grad').
-#     traverse_rule : str, optional
-#         Traversal rule ('bfs' or 'dfs').
-#     time_limit : float, optional
-#         Time limit for the algorithm.
-#     
-#     Returns
-#     -------
-#     global_x : (n,) ndarray
-#         Optimal solution.
-#     global_ub : float
-#         Global upper bound (optimal objective value).
-#     global_supp : list
-#         Support of the optimal solution.
-#     count : int
-#         Number of nodes explored.
-#     """
-#     relErr = 1e-8
-# 
-#     if traverse_rule == 'bfs':
-#         q = PriorityQueue()
-#     elif traverse_rule == 'dfs':
-#         q = LifoQueue()
-#     else:
-#         raise ValueError(f"Invalid traverse rule: {traverse_rule}")
-# 
-#     ub = 10e10
-#     global_ub = ub + 1e2
-#     
-#     # Solve initial relaxed problem
-#     x_init, lb, lambda_init = solveRMVP1(D, tau_bar, tau, gamma)
-# 
-# 
-#     global_supp = []
-#     Ssupp = []
-#     Psupp = list(range(D.shape[1]))
-#     DD = np.diag(D)
-#     
-#     q.put([lb,ub,0,Ssupp,Psupp,x_init,lambda_init])
-# 
-#     count = 0
-#     while q.qsize() >= 1:
-#         [lb,ub,_,Ssupp,Psupp,x1,lambda_val] = q.get()
-#         #print("count: ", count)
-#         #print("lb: ", lb)
-#         #print("global_ub: ", global_ub)
-#         #print("Ssupp: ", Ssupp)
-#         #print("Psupp: ", Psupp)
-#         #print("x1: ", x1)
-#         #print("lambda_val: ", lambda_val)
-# 
-#         count += 1
-#         if ub - global_ub < relErr:
-#             global_ub = ub
-#             global_supp = Ssupp
-#             global_x = x1
-# 
-# 
-#         if global_ub - lb <= relErr:
-#             print("global_ub <= lb")
-#             break
-#         if abs(ub - lb) < relErr:
-#             print("abs(ub - lb) < relErr")
-#             continue
-#         if len(Psupp) == 0:
-#             continue
-#         else:
-#             if len(Ssupp) >= 1:
-#                 ind, bb_ind = branchVariable_rmvp1(x1, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, branch_rule)
-#             else:
-#                 tau_Psupp = tau[Psupp]
-#                 var = DD[Psupp]
-#                 bb_dec = var/(tau_Psupp+1e-8)
-#                 bb_ind = np.argmin(bb_dec)
-#                 ind = Psupp[bb_ind]
-# 
-#             left_supp = sorted(Ssupp + [ind])
-#             Psupp = list(np.delete(np.array(Psupp), bb_ind))
-# 
-# 
-# 
-#             if len(Ssupp) + len(Psupp) >= 1: # Since right_sup = Ssupp + Psupp
-#                 w = Ssupp + Psupp
-#                 D_w = D[w,:][:,w]
-#                 tau_w = tau[w]
-# 
-#                 x_w_opt, right_lb, lambda_val = solveRMVP1(D_w, tau_bar, tau_w, gamma)
-#                 right_lb = right_lb + beta * len(Ssupp)
-# 
-# 
-#                 q.put([right_lb,ub,np.random.rand(),Ssupp,Psupp,x1,lambda_val])
-#                 
-# 
-#             
-#             if len(left_supp) >= 1:
-#                 w = left_supp
-#                 D_w = D[w,:][:,w]
-#                 tau_w = tau[w]
-# 
-# 
-#                 x_w_opt, left_ub, lambda_val = solveRMVP1(D_w, tau_bar, tau_w, gamma)
-#                 left_ub = left_ub + beta * len(left_supp)
-# 
-#                 q.put([lb+beta,left_ub,np.random.rand(),left_supp,Psupp,x_w_opt,lambda_val])
-#             
-#             else:
-#                 q.put([lb+beta,ub,np.random.rand(),left_supp,Psupp,x1,lambda_val])
-# 
-#     global_supp = sorted(global_supp)
-#     #print("count: ", count)
-#     return global_x, global_ub, global_supp, count
 
 
 
@@ -470,97 +357,6 @@ def RMVP1_mipGUROBI(D, tau, tau_bar, gamma, beta, threads=1):
         return x_opt, model.objVal, model.MIPGap
     else:
         return np.zeros((n, 1)), np.inf, np.inf
-
-
-# def RMVP1_mipMOSEK(D, tau, tau_bar, gamma, beta):
-#     """Disabled: MOSEK solver is not used."""
-#     raise NotImplementedError("MOSEK solver disabled; use CVXPY/GUROBI alternatives.")
-
-
-# def RMVP1_mipCVXPY(D, tau, tau_bar, gamma, beta):
-#     """
-#     Mixed-integer programming formulation for CP-RMVP problem using CVXPY:
-#         min_{x in R^n} x^T D x + beta * ||x||_0  s.t.  tau^T x - gamma * ||x||_D >= tau_bar
-#     
-#     Parameters
-#     ----------
-#     D : (n, n) array_like
-#         Positive semidefinite symmetric matrix D.
-#     tau : (n,) array_like
-#         The excess mean return vector estimate tau.
-#     tau_bar : float
-#         Scalar parameter tau_bar.
-#     gamma : float
-#         Ellipsoidal uncertainty radius γ.
-#     beta : float
-#         Sparsity penalty parameter.
-#     
-#     Returns
-#     -------
-#     x_opt : (n, 1) ndarray
-#         Optimal solution.
-#     obj_val : float
-#         Optimal objective value.
-#     """
-#     n = D.shape[0]
-#     # Big-M value for sparsity constraints
-#     M = 1e1  # Large enough bound for x
-#     
-#     # Convert to numpy arrays
-#     D = np.asarray(D, dtype=float)
-#     tau = np.asarray(tau, dtype=float)
-#
-#     
-#     # Decision variables
-#     x = cp.Variable(n, name="x")
-#     z = cp.Variable(n, boolean=True, name="z")
-#     t = cp.Variable(nonneg=True, name="t")
-#     
-#     # Objective: x^T D x + beta * sum(z_i)
-#     quad_term = cp.quad_form(x, D)
-#     sparsity_term = beta * cp.sum(z)
-#     objective = cp.Minimize(quad_term + sparsity_term)
-#     
-#     # Constraint: tau^T x - gamma * t >= tau_bar
-#     robust_constraint = tau.T @ x - gamma * t >= tau_bar
-#     
-#     # Constraint: t >= sqrt(x^T D x), which is equivalent to: x^T D x <= t^2
-#     # Using Cholesky decomposition: D = L L^T, then ||L^T x|| <= t
-#     # This is a second-order cone constraint: (t, L^T x) in SOC
-#     L = np.linalg.cholesky(D)
-#     L_T = L.T
-#     norm_constraint = cp.SOC(t, L_T @ x)
-#     
-#     # Sparsity constraints: |x_i| <= M * z_i
-#     # This is: -M * z_i <= x_i <= M * z_i
-#     sparsity_upper = x <= M * z
-#     sparsity_lower = x >= -M * z
-#     
-#     # Formulate problem
-#     constraints = [robust_constraint, sparsity_upper, sparsity_lower]
-#
-#     u = cp.Variable(nonneg=True)   # represents t^2
-#
-#     constraints += [
-#         cp.quad_form(x, cp.psd_wrap(D)) <= u,          # x^T D x <= u   (DCP)
-#         cp.SOC(u + 0.5, cp.hstack([u - 0.5, t]))       # enforces t^2 <= u (rotated cone)
-#     ]
-#
-#
-#     problem = cp.Problem(objective, constraints)
-#     
-#     # Solve with default available solver
-#     problem.solve(verbose=False)
-#     
-#     # Extract solution
-#     if problem.status == cp.OPTIMAL:
-#         x_opt = x.value.reshape(-1, 1)
-#         # Post-process: set near-zero entries to exactly zero
-#         #x_opt[np.abs(x_opt) < 1e-8] = 0.0
-#         obj_val = problem.value
-#         return x_opt, obj_val
-#     else:
-#         return np.zeros((n, 1)), np.inf
 
     
     
@@ -711,12 +507,17 @@ def branchVariable_rmvp2(x, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, br
     return ind, bb_ind
 
 
-def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='auto', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None):
+def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='auto', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None, collect_collapse=False):
     """
     Branch-and-bound algorithm for CP-RMVP2 problem (same structure as mainRMVP1BnB).
+
+    If collect_collapse=True, also returns two lists (collapse_S, collapse_P) recording
+    |S| and |P| at every right-subtree collapse; the return becomes a 6-tuple. Default
+    False keeps the historical 4-tuple return for existing callers.
     """
     np.random.seed(42)
     relErr = 1e-8
+    collapse_S, collapse_P = [], []   # |S|, |P| at each right-subtree collapse
 
     if traverse_rule == 'bfs':
         q = PriorityQueue()
@@ -773,8 +574,21 @@ def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='auto', branch_rule='ma
 
             x_w_opt, right_lb, lambda_val = solveRMVP2(D_w, tau_bar, tau_w, gamma, beta, t)
             right_lb = right_lb + beta * Ssupp.size
-
-            q.put([right_lb, ub, np.random.rand(), Ssupp, Psupp, x1, lambda_val])
+            
+            if right_lb + beta >= global_ub - relErr:          # lb^R + beta >= ub* - eps
+                collapse_S.append(int(Ssupp.size))             # record |S|, |P| at collapse
+                collapse_P.append(int(Psupp.size))
+                if Ssupp.size >= 1:                            # |S| >= 1
+                     D_S   = D[np.ix_(Ssupp, Ssupp)]
+                     tau_S = tau[Ssupp]
+                     x_S_opt, relax_S, _ = solveRMVP2(D_S, tau_bar, tau_S, gamma, beta, t)
+                     ub_S = relax_S + beta * Ssupp.size         # ub^S = value on support S + beta*|S|
+                     if ub_S < global_ub:                       # ub^S < ub*
+                         global_ub   = ub_S                     # ub* <- ub^S
+                         global_x    = x_S_opt                  # x*  <- Xi(S) (reduced; caller zero-pads via global_supp)
+                         global_supp = Ssupp
+            else:
+                q.put([right_lb, ub, np.random.rand(), Ssupp, Psupp, x1, lambda_val])  # Enqueue (x, lb^R, ub, Psupp, S)
 
         if left_supp.size >= 1:
             w = left_supp
@@ -787,106 +601,9 @@ def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='auto', branch_rule='ma
             q.put([lb + beta, left_ub, np.random.rand(), left_supp, Psupp, x_w_opt, lambda_val])
 
     global_supp = np.array(sorted(global_supp.tolist()), dtype=np.int32)
+    if collect_collapse:
+        return global_x, global_ub, global_supp, count, collapse_S, collapse_P
     return global_x, global_ub, global_supp, count
-
-# Old implementation (commented)
-# def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='mosek', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None):
-#     """
-#     Branch-and-bound algorithm for CP-RMVP2 problem (same structure as mainRMVP1BnB).
-#     """
-#     relErr = 1e-8
-# 
-#     if traverse_rule == 'bfs':
-#         q = PriorityQueue()
-#     elif traverse_rule == 'dfs':
-#         q = LifoQueue()
-#     else:
-#         raise ValueError(f"Invalid traverse rule: {traverse_rule}")
-# 
-#     ub = 10e10
-#     global_ub = ub + 1e-4
-#     
-#     # Solve initial relaxed problem
-#     x_init, lb, lambda_init = solveRMVP2(D, tau_bar, tau, gamma, beta, t)
-# 
-# 
-#     global_supp = []
-#     Ssupp = []
-#     Psupp = list(range(D.shape[1]))
-#     DD = np.diag(D)
-#     
-#     q.put([lb,ub,0,Ssupp,Psupp,x_init,lambda_init])
-# 
-#     count = 0
-#     while q.qsize() >= 1:
-#         [lb,ub,_,Ssupp,Psupp,x1,lambda_val] = q.get()
-# 
-#         count += 1
-#         if ub - global_ub < relErr:
-#             global_ub = ub
-#             global_supp = Ssupp
-#             global_x = x1
-# 
-# 
-#         if global_ub <= lb:
-#             print("global_ub <= lb")
-#             break
-#         if abs(ub - lb) < relErr:
-#             print("abs(ub - lb) < relErr")
-#             continue
-#         if len(Psupp) == 0:
-#             continue
-#         else:
-#             if len(Ssupp) >= 1:
-#                 ind, bb_ind = branchVariable_rmvp2(x1, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, branch_rule)
-#             else:
-#                 #bb_ind = 0
-#                 #ind = Psupp[bb_ind]
-# 
-#                 tau_Psupp = tau[Psupp]
-#                 var = DD[Psupp]
-#                 bb_dec = var/(tau_Psupp+1e-8)
-#                 bb_ind = np.argmin(bb_dec)
-#                 ind = Psupp[bb_ind]
-# 
-#             left_supp = sorted(Ssupp + [ind])
-#             Psupp = list(np.delete(np.array(Psupp), bb_ind))
-# 
-# 
-#             #if len(Ssupp) == 0: print("Ssupp is empty")
-# 
-# 
-# 
-#             if len(Ssupp) + len(Psupp) >= 1: # Since right_sup = Ssupp + Psupp
-#                 w = Ssupp + Psupp
-#                 D_w = D[w,:][:,w]
-#                 tau_w = tau[w]
-# 
-#                 x_w_opt, right_lb, lambda_val = solveRMVP2(D_w, tau_bar, tau_w, gamma, beta, t)
-#                 right_lb = right_lb + beta * len(Ssupp)
-# 
-# 
-#                 q.put([right_lb,ub,np.random.rand(),Ssupp,Psupp,x1,lambda_val])
-#                 
-# 
-#             
-#             if len(left_supp) >= 1: 
-#                 w = left_supp
-#                 D_w = D[w,:][:,w]
-#                 tau_w = tau[w]
-# 
-# 
-#                 x_w_opt, left_ub, lambda_val = solveRMVP2(D_w, tau_bar, tau_w, gamma, beta, t)
-#                 left_ub = left_ub + beta * len(left_supp)
-# 
-#                 q.put([lb+beta,left_ub,np.random.rand(),left_supp,Psupp,x_w_opt,lambda_val])
-#             
-#             else:
-#                 q.put([lb+beta,ub,np.random.rand(),left_supp,Psupp,x1,lambda_val])
-# 
-#     global_supp = sorted(global_supp)
-#     #print("count: ", count)
-#     return global_x, global_ub, global_supp, count
 
 
 def RMVP2_mipGUROBI(D, tau, tau_bar, gamma, beta, t, threads=1):

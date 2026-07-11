@@ -1,0 +1,5 @@
+
+.claude/settings.local.json
+
+# Gurobi license (contains token server / credentials)
+gurobi.lic
