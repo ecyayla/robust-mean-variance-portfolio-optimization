@@ -162,7 +162,7 @@ def branchVariable_rmvp1(x, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, br
 
 
 
-def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='auto', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None, collect_collapse=False):
+def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='auto', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None, collect_collapse=True, enable_collapse=True):
     """
     Branch-and-bound algorithm for CP-RMVP problem:
         min_{x in R^n} x^T D x  s.t.  tau^T x - gamma * ||x||_D >= tau_bar
@@ -231,7 +231,7 @@ def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='auto', branch_rule='max_l
             x_w_opt, right_lb, lambda_val = solveRMVP1(D_w, tau_bar, tau_w, gamma)
             right_lb = right_lb + beta * Ssupp.size
 
-            if right_lb + beta >= global_ub - relErr:          # lb^R + beta >= ub* - eps
+            if (right_lb + beta >= global_ub - relErr) and enable_collapse:          # lb^R + beta >= ub* - eps
                 collapse_S.append(int(Ssupp.size))             # record |S|, |P| at collapse
                 collapse_P.append(int(Psupp.size))
                 if Ssupp.size >= 1:                            # |S| >= 1
@@ -507,7 +507,7 @@ def branchVariable_rmvp2(x, D, tau, tau_bar, gamma, Ssupp, Psupp, lambda_val, br
     return ind, bb_ind
 
 
-def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='auto', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None, collect_collapse=False):
+def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='auto', branch_rule='max_lagrangian_grad', traverse_rule='bfs', time_limit=None, collect_collapse=True, enable_collapse=True):
     """
     Branch-and-bound algorithm for CP-RMVP2 problem (same structure as mainRMVP1BnB).
 
@@ -575,7 +575,7 @@ def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='auto', branch_rule='ma
             x_w_opt, right_lb, lambda_val = solveRMVP2(D_w, tau_bar, tau_w, gamma, beta, t)
             right_lb = right_lb + beta * Ssupp.size
             
-            if right_lb + beta >= global_ub - relErr:          # lb^R + beta >= ub* - eps
+            if (right_lb + beta >= global_ub - relErr) and enable_collapse:          # lb^R + beta >= ub* - eps
                 collapse_S.append(int(Ssupp.size))             # record |S|, |P| at collapse
                 collapse_P.append(int(Psupp.size))
                 if Ssupp.size >= 1:                            # |S| >= 1
