@@ -234,15 +234,6 @@ def mainRMVP1BnB(D, tau, tau_bar, gamma, beta, method='auto', branch_rule='max_l
             if (right_lb + beta >= global_ub - relErr) and enable_collapse:          # lb^R + beta >= ub* - eps
                 collapse_S.append(int(Ssupp.size))             # record |S|, |P| at collapse
                 collapse_P.append(int(Psupp.size))
-                if Ssupp.size >= 1:                            # |S| >= 1
-                    D_S   = D[np.ix_(Ssupp, Ssupp)]
-                    tau_S = tau[Ssupp]
-                    x_S_opt, relax_S, _ = solveRMVP1(D_S, tau_bar, tau_S, gamma)
-                    ub_S = relax_S + beta * Ssupp.size         # ub^S = xi(S)^T D_S xi(S) + beta*|S|
-                    if ub_S < global_ub:                       # ub^S < ub*
-                        global_ub   = ub_S                     # ub* <- ub^S
-                        global_x    = x_S_opt                  # x*  <- Xi(S) (reduced; caller zero-pads via global_supp)
-                        global_supp = Ssupp
             else:
                 q.put([right_lb, ub, np.random.rand(), Ssupp, Psupp, x1, lambda_val])  # Enqueue (x, lb^R, ub, Psupp, S)
 
@@ -578,15 +569,6 @@ def mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t, method='auto', branch_rule='ma
             if (right_lb + beta >= global_ub - relErr) and enable_collapse:          # lb^R + beta >= ub* - eps
                 collapse_S.append(int(Ssupp.size))             # record |S|, |P| at collapse
                 collapse_P.append(int(Psupp.size))
-                if Ssupp.size >= 1:                            # |S| >= 1
-                     D_S   = D[np.ix_(Ssupp, Ssupp)]
-                     tau_S = tau[Ssupp]
-                     x_S_opt, relax_S, _ = solveRMVP2(D_S, tau_bar, tau_S, gamma, beta, t)
-                     ub_S = relax_S + beta * Ssupp.size         # ub^S = value on support S + beta*|S|
-                     if ub_S < global_ub:                       # ub^S < ub*
-                         global_ub   = ub_S                     # ub* <- ub^S
-                         global_x    = x_S_opt                  # x*  <- Xi(S) (reduced; caller zero-pads via global_supp)
-                         global_supp = Ssupp
             else:
                 q.put([right_lb, ub, np.random.rand(), Ssupp, Psupp, x1, lambda_val])  # Enqueue (x, lb^R, ub, Psupp, S)
 
