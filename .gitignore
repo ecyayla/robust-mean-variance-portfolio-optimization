@@ -3,3 +3,10 @@
 
 # Gurobi license (contains token server / credentials)
 gurobi.lic
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store

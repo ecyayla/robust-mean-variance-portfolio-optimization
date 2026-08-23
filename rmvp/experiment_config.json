@@ -7,7 +7,7 @@
           0.0002
         ],
         "beta_values": [
-          5e-05
+          1e-05
         ],
         "target_return_factors": [
           1.05
@@ -16,13 +16,13 @@
           0.001
         ],
         "drop_fractions_by_beta": {
-          "5e-05": [
+          "1e-05": [
             0.9
           ]
         }
       },
       "DowJones_returns.xlsx": {
-        "enabled": true,
+        "enabled": false,
         "rc_values": [
           0.0002
         ],
@@ -46,7 +46,7 @@
         }
       },
       "ETF.xlsx": {
-        "enabled": true,
+        "enabled": false,
         "rc_values": [
           0.0002
         ],
@@ -92,7 +92,7 @@
         }
       },
       "EuroStoxx50_returns.xlsx": {
-        "enabled": true,
+        "enabled": false,
         "rc_values": [
           0.0002
         ],
@@ -116,7 +116,7 @@
         }
       },
       "FTSE100_returns.xlsx": {
-        "enabled": true,
+        "enabled": false,
         "rc_values": [
           0.0002
         ],
@@ -144,7 +144,7 @@
         }
       },
       "ItalianBondsandCommodities.xlsx": {
-        "enabled": true,
+        "enabled": false,
         "rc_values": [
           0.0002
         ],
@@ -173,9 +173,7 @@
           0.0002
         ],
         "beta_values": [
-          0.0001,
-          5e-05,
-          1e-05
+          5e-05
         ],
         "target_return_factors": [
           1.05
@@ -184,16 +182,7 @@
           0.001
         ],
         "drop_fractions_by_beta": {
-          "0.0001": [
-            0.5,
-            0.4
-          ],
           "5e-05": [
-            0.5,
-            0.4
-          ],
-          "1e-05": [
-            0.5,
             0.4
           ]
         }
@@ -203,7 +192,7 @@
   "rmvp2": {
     "datasets": {
       "SP500_returns.xlsx": {
-        "enabled": true,
+        "enabled": false,
         "rc_values": [
           0.0002
         ],
@@ -267,7 +256,7 @@
         }
       },
       "ETF.xlsx": {
-        "enabled": true,
+        "enabled": false,
         "rc_values": [
           0.0002
         ],
@@ -317,7 +306,7 @@
         }
       },
       "EuroStoxx50_returns.xlsx": {
-        "enabled": true,
+        "enabled": false,
         "rc_values": [
           0.0002
         ],
@@ -344,7 +333,7 @@
         }
       },
       "FTSE100_returns.xlsx": {
-        "enabled": true,
+        "enabled": false,
         "rc_values": [
           0.0002
         ],
@@ -375,7 +364,7 @@
         }
       },
       "ItalianBondsandCommodities.xlsx": {
-        "enabled": true,
+        "enabled": false,
         "rc_values": [
           0.0002
         ],
@@ -402,7 +391,7 @@
         }
       },
       "NASDAQ100_returns.xlsx": {
-        "enabled": true,
+        "enabled": false,
         "rc_values": [
           0.0002
         ],

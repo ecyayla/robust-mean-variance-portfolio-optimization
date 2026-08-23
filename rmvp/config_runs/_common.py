@@ -92,7 +92,7 @@ def solve_bnb_rmvp1(D, tau, tau_bar, gamma, beta):
     n = D.shape[0]
     w0, c0 = time.time(), time.process_time()
     x_bnb, _, supp_bnb, nodes, cS, cP = mainRMVP1BnB(D, tau, tau_bar, gamma, beta,
-                                                     collect_collapse=True, enable_collapse=False)
+                                                     collect_collapse=True, enable_collapse=True)
     wall, cpu = time.time() - w0, time.process_time() - c0
     x_bnb = zeropadding(x_bnb, supp_bnb, n)
     obj = float((x_bnb.T @ D @ x_bnb + beta * np.sum(np.abs(x_bnb) > NNZ_TOL))[0][0])
@@ -105,7 +105,7 @@ def solve_bnb_rmvp2(D, tau, tau_bar, gamma, beta, t):
     n = D.shape[0]
     w0, c0 = time.time(), time.process_time()
     x_bnb, _, supp_bnb, nodes, cS, cP = mainRMVP2BnB(D, tau, tau_bar, gamma, beta, t,
-                                                     collect_collapse=True, enable_collapse=False)
+                                                     collect_collapse=True, enable_collapse=True)
     wall, cpu = time.time() - w0, time.process_time() - c0
     x_bnb = zeropadding(x_bnb, supp_bnb, n)
     quad = float((x_bnb.T @ D @ x_bnb)[0][0])

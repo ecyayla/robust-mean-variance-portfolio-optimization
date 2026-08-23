@@ -1,0 +1,8 @@
+# rvs | data=FF100_SizeBM shape=(4782, 100) dailyvol=1.47e-02 | W=252 H=21 tr=1.05 drop=0.3 ridge=0.0 | 215 rebalances | 4 cells
+# flag: 'tol!' = beta or median risk-term within 10x the 1e-8 solver tolerance -> numerically fragile. tFull/pFull = paired t & p on OOS excess Sharpe.
+     r_c gamma     beta suppS suppR  ShrpS  ShrpR  retS%  retR%    netS    netR  tFull   pFull ndiff rWin%  flag
+ 5.0e-05 0.100  1.0e-06  1.06  2.95   0.32   0.47   0.01   0.09  +0.001  +0.004   1.53  0.0639   112    62      
+ 5.0e-05 0.100  5.0e-07  1.32  3.75   0.43   0.43   0.01   0.09  +0.001  +0.004  -0.45  0.6720   109    59      
+ 5.0e-05 0.150  1.0e-06  1.00  2.94   0.45   0.57   0.01   0.29  +0.002  +0.011   2.23  0.0151    43    63      
+ 5.0e-05 0.150  5.0e-07  1.06  3.38   0.50   0.57   0.01   0.29  +0.002  +0.011   1.48  0.0729    42    60      
+DONE (28465s)

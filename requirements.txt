@@ -1,0 +1,10 @@
+numpy
+pandas
+scipy
+cvxpy
+openpyxl
+
+# Optional: only needed for the Gurobi benchmark scripts in rmvp/config_runs/
+# (requires a valid Gurobi license). The branch-and-bound method itself does
+# not depend on Gurobi.
+gurobipy
