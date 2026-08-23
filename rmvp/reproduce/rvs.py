@@ -23,16 +23,16 @@ drop is the warm-start elimination fraction. drop=0 is EXACT branch-and-bound (r
 for final numbers). drop>0 drops the "farthest" assets before the BnB — it is a HEURISTIC
 that speeds up the solve but CAN change the optimum. Default is 0 (exact).
 
-Examples
---------
+Examples (run from the rmvp/ directory)
+---------------------------------------
 # EuroBonds r_c x beta grid at gamma=0.10, exact:
-python3 rvs.py --data datasets/EuroBondsRet.xlsx --r_c 2e-4 1e-4 5e-5 --beta 1e-6 5e-7 1e-7
+python3 reproduce/rvs.py --data datasets/EuroBondsRet.xlsx --r_c 2e-4 1e-4 5e-5 --beta 1e-6 5e-7 1e-7
 
 # gamma sweep at fixed r_c:
-python3 rvs.py --data datasets/EuroBondsRet.xlsx --r_c 1e-4 --gamma 0.10 0.15 --beta 1e-6 5e-7
+python3 reproduce/rvs.py --data datasets/EuroBondsRet.xlsx --r_c 1e-4 --gamma 0.10 0.15 --beta 1e-6 5e-7
 
 # a different dataset, warm-start on for a quick look:
-python3 rvs.py --data datasets/NASDAQ100_returns.xlsx --r_c 1e-4 5e-5 --beta 1e-4 5e-5 --drop 0.5
+python3 reproduce/rvs.py --data datasets/NASDAQ100_returns.xlsx --r_c 1e-4 5e-5 --beta 1e-4 5e-5 --drop 0.5
 """
 import argparse
 import itertools
@@ -46,7 +46,8 @@ import pandas as pd
 from scipy import stats
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
+RMVP_DIR = os.path.dirname(HERE)                   # parent rmvp/ holds the core modules
+sys.path.insert(0, RMVP_DIR)
 from main import solveRMVP1, mainRMVP1BnB          # noqa: E402
 from warm_start import warm_start_rmvp1            # noqa: E402
 

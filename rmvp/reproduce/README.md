@@ -1,9 +1,15 @@
-# config_runs — guide
+# reproduce — guide
 
-Re-runs the paper's computational study (Tables 1 & 2) driven by
-`rmvp/experiment_config.json`. Two models × two solvers = **4 independent scripts**,
-each writing its own timestamped Excel. This file explains the flow, where each piece
-lives, and what every Excel column means.
+Scripts that reproduce the paper's experiments:
+
+- **Computational study (Tables 2–3)** — driven by `rmvp/experiment_config.json`.
+  Two models × two solvers = **4 independent scripts** (`run_rmvp*_{bnb,gurobi}.py`),
+  each writing its own timestamped Excel.
+- **Out-of-sample study (Section 6.1)** — `rvs.py`, a standalone CLI (see its module
+  docstring for usage); not config-driven.
+
+The rest of this file documents the four config-driven scripts: the flow, where each
+piece lives, and what every Excel column means.
 
 ## Models
 
@@ -16,13 +22,14 @@ lives, and what every Excel column means.
 ## Files
 
 ```
-config_runs/
+reproduce/
     README.md            <- this file
-    _common.py           <- shared helpers, imported by all 4 scripts
+    _common.py           <- shared helpers, imported by all 4 config-driven scripts
     run_rmvp1_bnb.py     <- RMVP1, Branch-and-Bound  (warm-start + drop loop)
     run_rmvp1_gurobi.py  <- RMVP1, Gurobi MIP        (single solve, no warm-start)
     run_rmvp2_bnb.py     <- RMVP2, Branch-and-Bound  (warm-start + drop loop)
     run_rmvp2_gurobi.py  <- RMVP2, Gurobi MIP        (single solve, no warm-start)
+    rvs.py               <- Section 6.1 out-of-sample robust-vs-sparse runner (CLI)
     <prefix>_YYYY-MM-DD_HH-MM.xlsx   <- outputs, one per run
 ```
 
@@ -37,7 +44,7 @@ Supporting code lives one level up in `rmvp/`:
 ## How to run
 
 ```bash
-cd rmvp/config_runs
+cd rmvp/reproduce
 python3 run_rmvp1_bnb.py       # each script is standalone
 ```
 
@@ -170,8 +177,7 @@ Tables 1 & 2 (`nnz` = 1, 3, 14, 26).
 
 ## Gurobi license
 
-`_common.py` sets `GRB_LICENSE_FILE` to the project-root `gurobi.lic` (token server
-`139.179.39.137:41954`) if that file exists and no license env var is already set —
-otherwise Gurobi would fall through to an expired `/opt/gurobi/gurobi.lic`. If you move
-this to another machine, point `GRB_LICENSE_FILE` at a valid license or the Gurobi
-scripts will fail (the BnB scripts don't need Gurobi).
+`_common.py` sets `GRB_LICENSE_FILE` to the project-root `gurobi.lic` if that file exists
+and no license env var is already set. If you move this to another machine, point
+`GRB_LICENSE_FILE` at a valid Gurobi license or the Gurobi scripts will fail (the BnB
+scripts don't need Gurobi).

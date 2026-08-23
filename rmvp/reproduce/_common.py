@@ -27,11 +27,9 @@ if RMVP_DIR not in sys.path:
     sys.path.insert(0, RMVP_DIR)
 
 # --- Gurobi license -------------------------------------------------------
-# The project-root gurobi.lic points at the working token server
-# (139.179.39.137:41954). Because these scripts run from config_runs/, Gurobi's
-# default cwd search would otherwise miss it and fall through to the expired
-# /opt/gurobi/gurobi.lic. Point GRB_LICENSE_FILE at the project-root file
-# explicitly (unless the user already set one). Harmless for the BnB scripts.
+# Because these scripts run from reproduce/, Gurobi's default cwd search would miss a
+# project-root gurobi.lic. Point GRB_LICENSE_FILE at the project-root file explicitly
+# (unless the user already set one). Harmless for the BnB scripts, which don't use Gurobi.
 _proj_lic = os.path.join(os.path.dirname(RMVP_DIR), "gurobi.lic")
 if os.path.exists(_proj_lic) and not os.environ.get("GRB_LICENSE_FILE"):
     os.environ["GRB_LICENSE_FILE"] = _proj_lic
@@ -68,8 +66,8 @@ def timestamped_output(prefix):
 
 # ---------------------------------------------------------------------------
 # drop_fractions_by_beta lookup -- match config keys by FLOAT value.
-# str(0.00005) == '5e-05' would NOT match a config key '0.00005'; the paper's
-# test_warmstart.py uses that str() lookup and thus silently skips such betas.
+# A naive str() lookup would fail here: str(0.00005) == '5e-05' would NOT match a
+# config key '0.00005', silently skipping such betas. Comparing floats avoids that.
 # ---------------------------------------------------------------------------
 def resolve_drop_fractions(drop_map, beta):
     if not drop_map:
