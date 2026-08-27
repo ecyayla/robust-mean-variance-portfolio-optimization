@@ -217,8 +217,8 @@ def run_cell(R, starts, W, H, rc, tr, gamma, beta, drop, timeout, ridge):
     )
 
 
-HEADER = (f'{"r_c":>8s} {"gamma":>5s} {"beta":>8s} {"suppS":>5s} {"suppR":>5s} '
-          f'{"ShrpS":>6s} {"ShrpR":>6s} {"retS%":>6s} {"retR%":>6s} '
+HEADER = (f'{"r_c":>8s} {"gamma":>5s} {"beta":>8s} {"suppS":>7s} {"suppR":>7s} '
+          f'{"ShrpS":>8s} {"ShrpR":>8s} {"retS%":>8s} {"retR%":>8s} '
           f'{"netS":>7s} {"netR":>7s} {"tFull":>6s} {"pFull":>7s} '
           f'{"ndiff":>5s} {"rWin%":>5s} {"flag":>5s}')
 
@@ -267,8 +267,8 @@ def main():
             row = f'{rc:8.1e} {gamma:5.3f} {beta:8.1e}  (no feasible windows)'
         else:
             flag = "tol!" if (beta < 10 * TOL or m["med_risk"] < 10 * TOL) else ""
-            row = (f'{rc:8.1e} {gamma:5.3f} {beta:8.1e} {m["suppS"]:5.2f} {m["suppR"]:5.2f} '
-                   f'{m["ShrpS"]:6.2f} {m["ShrpR"]:6.2f} {m["retS"]:6.2f} {m["retR"]:6.2f} '
+            row = (f'{rc:8.1e} {gamma:5.3f} {beta:8.1e} {m["suppS"]:7.4f} {m["suppR"]:7.4f} '
+                   f'{m["ShrpS"]:8.4f} {m["ShrpR"]:8.4f} {m["retS"]:8.4f} {m["retR"]:8.4f} '
                    f'{m["netS"]:+7.3f} {m["netR"]:+7.3f} {m["tF"]:6.2f} {m["pF"]:7.4f} '
                    f'{m["ndiff"]:5d} {m["rWin"]:5.0f} {flag:>5s}')
         with open(out, "a") as f:
